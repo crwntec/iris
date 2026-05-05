@@ -120,6 +120,11 @@ func (c *Client) Login(username, password string) error {
 	if username == "" || password == "" {
 		return fmt.Errorf("login failed: username or password empty")
 	}
+	newJar, err := cookiejar.New(nil)
+	if err != nil {
+		return fmt.Errorf("login failed: %w", err)
+	}
+	c.http.Jar = newJar
 	resp, err := c.http.PostForm(c.config.BaseURL+"/WebUntis/j_spring_security_check", url.Values{
 		"school":     {c.config.SchoolName},
 		"j_username": {username},
@@ -138,7 +143,6 @@ func (c *Client) Login(username, password string) error {
 		}
 		return fmt.Errorf("login failed: unexpected redirect to %q (status %d)", location, resp.StatusCode)
 	}
-
 	schoolID, err := extractSchoolID(resp.Cookies())
 	if err != nil {
 		return err
@@ -226,7 +230,7 @@ func (c *Client) GetTimetable(ctx context.Context, info UntisInfo, start, end st
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		if err := c.refreshToken(); err != nil {
-			return Timetable{}, fmt.Errorf("re-auth failed: %w", err)
+			return Timetable{}, fmt.Errorf("re-auth failed: %w; client: %v", err, *c)
 		}
 		return c.GetTimetable(ctx, info, start, end)
 	}
@@ -267,7 +271,12 @@ func (c *Client) GetAbsences(ctx context.Context, info UntisInfo, start, end str
 		}
 		return c.GetAbsences(ctx, info, start, end)
 	}
-
+	if resp.StatusCode == http.StatusFound {
+		if err := c.refreshToken(); err != nil {
+			return Absences{}, fmt.Errorf("re-auth failed: %w", err)
+		}
+		return c.GetAbsences(ctx, info, start, end)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return Absences{}, fmt.Errorf("absences request returned status %d", resp.StatusCode)
 	}

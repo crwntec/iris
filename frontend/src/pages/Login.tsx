@@ -1,46 +1,30 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { NavLink } from "react-router-dom";
 
-export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSubmit = async () => {
-    try {
-      await login(username, password);
-      navigate("/timetable");
-    } catch {
-      setError("Login fehlgeschlagen");
-    }
-  };
-
+export default function BottomNav() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4 p-8">
-      <h1 className="text-2xl font-bold">Iris</h1>
-      <input
-        className="w-full border rounded p-2"
-        placeholder="Benutzername"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <input
-        className="w-full border rounded p-2"
-        type="password"
-        placeholder="Passwort"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      {error && <p className="text-red-500">{error}</p>}
-      <button
-        className="w-full bg-black text-white rounded p-2"
-        onClick={handleSubmit}
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-zinc-950 border-t border-zinc-800 flex items-center justify-around px-4">
+      <NavLink
+        to="/timetable"
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 text-xs tracking-widest uppercase transition-colors ${
+            isActive ? "text-white" : "text-zinc-600"
+          }`
+        }
       >
-        Anmelden
-      </button>
-    </div>
+        <span className="text-lg">📅</span>
+        Stundenplan
+      </NavLink>
+      <NavLink
+        to="/absences"
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 text-xs tracking-widest uppercase transition-colors ${
+            isActive ? "text-white" : "text-zinc-600"
+          }`
+        }
+      >
+        <span className="text-lg">📋</span>
+        Fehlzeiten
+      </NavLink>
+    </nav>
   );
 }

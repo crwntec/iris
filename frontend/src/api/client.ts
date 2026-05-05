@@ -1,3 +1,5 @@
+import type { Absences } from "../types/untis";
+
 const BASE_URL = "http://localhost:8080";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -30,6 +32,6 @@ export const api = {
   getTimetable: (start: string, end: string) =>
     request(`/untis/timetable?start=${start}&end=${end}`),
 
-  getAbsences: (start: string, end: string) =>
+  getAbsences: (start: string, end: string): Promise<Absences> =>
     request(`/untis/absences?start=${start}&end=${end}`),
 };

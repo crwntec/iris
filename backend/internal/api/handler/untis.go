@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -21,6 +22,13 @@ type UntisHandler struct {
 
 func NewUntisHandler(vk valkey.Client, conf config.Config) *UntisHandler {
 	return &UntisHandler{vk: vk, Config: conf}
+}
+func (h *UntisHandler) updateSession(ctx context.Context, username string, client *untis.Client) {
+	h.vk.Do(ctx, h.vk.B().Hset().Key("user:"+username).
+		FieldValue().
+		FieldValue("sessionID", client.Session.SessionID).
+		FieldValue("token", client.Session.Token).
+		Build())
 }
 
 func (h *UntisHandler) clientFromRequest(r *http.Request) (*untis.Client, untis.UntisInfo, error) {
@@ -75,9 +83,11 @@ func (h *UntisHandler) GetTimetable(w http.ResponseWriter, r *http.Request) {
 
 	tt, err := client.GetTimetable(r.Context(), info, start, end)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		http.Error(w, "internal error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	username, _ := r.Context().Value("username").(string)
+	h.updateSession(r.Context(), username, client)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tt)
@@ -108,9 +118,11 @@ func (h *UntisHandler) GetAbsences(w http.ResponseWriter, r *http.Request) {
 		endParsed.Format("20060102"),
 	)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		http.Error(w, "internal error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	username, _ := r.Context().Value("username").(string)
+	h.updateSession(r.Context(), username, client)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(absences)

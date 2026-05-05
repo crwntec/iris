@@ -5,15 +5,28 @@ export default function Timetable() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["timetable", "2026-04-27", "2026-05-03"],
     queryFn: () => api.getTimetable("2026-04-27", "2026-05-03"),
+    staleTime: 1000 * 60 * 5,
   });
 
-  if (isLoading) return <p>Laden...</p>;
-  if (error) return <p>Fehler</p>;
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-full bg-zinc-950">
+        <p className="text-sm text-zinc-400 tracking-widest uppercase animate-pulse">
+          Laden…
+        </p>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex items-center justify-center h-full bg-zinc-950">
+        <p className="text-sm text-rose-400">Fehler beim Laden</p>
+      </div>
+    );
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold">Stundenplan</h1>
-      <pre>{JSON.stringify(data, null, 2)}</pre>
+    <div className="min-h-full bg-zinc-950 text-white px-4 pt-8 pb-24">
+      <pre className="text-xs text-zinc-400">coming soon</pre>
     </div>
   );
 }
