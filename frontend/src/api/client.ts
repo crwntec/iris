@@ -1,6 +1,6 @@
 import type { Absences } from "../types/untis";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("token");

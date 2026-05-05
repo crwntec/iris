@@ -38,8 +38,8 @@ export default function Absences() {
       </div>
     );
 
-  const excused = data.absences.filter((a: Absence) => a.isExcused);
-  const unexcused = data.absences.filter((a: Absence) => !a.isExcused);
+  const excused = data?.absences.filter((a: Absence) => a.isExcused) ?? [];
+  const unexcused = data?.absences.filter((a: Absence) => !a.isExcused) ?? [];
 
   return (
     <div className="min-h-full bg-zinc-950 text-white px-4 pt-8 pb-24">
@@ -47,7 +47,7 @@ export default function Absences() {
         <div className="flex gap-4 mt-3">
           <div className="flex-1 rounded-2xl bg-zinc-900 px-4 py-3">
             <p className="text-3xl font-bold text-white">
-              {data.absences.length}
+              {data?.absences.length}
             </p>
             <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">
               Gesamt
@@ -73,7 +73,7 @@ export default function Absences() {
       </div>
 
       <div className="space-y-3">
-        {data.absences.map((absence: Absence) => (
+        {data?.absences.map((absence: Absence) => (
           <div
             key={absence.id}
             className={`rounded-2xl px-4 py-4 border ${

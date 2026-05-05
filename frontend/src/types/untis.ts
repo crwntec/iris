@@ -34,4 +34,4 @@ interface Excuse {
   userId: number;
   username: string;
 }
-export { Absence, Absences, Excuse };
+export type { Absence, Absences, Excuse };
