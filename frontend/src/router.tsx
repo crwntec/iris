@@ -3,7 +3,7 @@ import { useAuth } from "./hooks/useAuth";
 import Absences from "./pages/Absences";
 import Login from "./pages/Login";
 import Layout from "./layout";
-import Timetable from "./pages/Timetable";
+import TimetableStats from "./pages/TimetableStats";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useAuth();
@@ -21,9 +21,9 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/timetable" replace /> },
-      { path: "timetable", element: <Timetable /> },
+      { index: true, element: <Navigate to="/absences" replace /> },
       { path: "absences", element: <Absences /> },
+      { path: "stats", element: <TimetableStats /> },
     ],
   },
 ]);

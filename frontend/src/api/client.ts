@@ -1,6 +1,6 @@
-import type { Absences } from "../types/untis";
+import type { Absences, Timetable } from "../types/untis";
 
-const BASE_URL = "/api";
+const BASE_URL = import.meta.env.DEV ? "http://localhost:8080" : "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("token");
@@ -29,7 +29,7 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
 
-  getTimetable: (start: string, end: string) =>
+  getTimetable: (start: string, end: string): Promise<Timetable> =>
     request(`/untis/timetable?start=${start}&end=${end}`),
 
   getAbsences: (start: string, end: string): Promise<Absences> =>

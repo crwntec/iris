@@ -15,15 +15,15 @@ export default function BottomNav() {
         Fehlzeiten
       </NavLink>
       <NavLink
-        to="/timetable"
+        to="/stats"
         className={({ isActive }) =>
           `flex flex-col items-center gap-1 text-xs tracking-widest uppercase transition-colors ${
             isActive ? "text-white" : "text-zinc-600"
           }`
         }
       >
-        <span className="text-lg">📅</span>
-        Stundenplan
+        <span className="text-lg">📈</span>
+        Statistik
       </NavLink>
     </nav>
   );

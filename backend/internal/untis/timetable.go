@@ -74,6 +74,7 @@ func TimetableFromResponse(resp TimetableResponse) (Timetable, error) {
 				Teacher: teacher,
 				Subject: subject,
 				Room:    room,
+				Icons: ge.Icons,
 			}
 			day.Lessons = append(day.Lessons, lesson)
 		}

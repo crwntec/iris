@@ -88,6 +88,7 @@ type GridEntry struct {
 	Position1 []PositionItem `json:"position1"` // teacher
 	Position2 []PositionItem `json:"position2"` // subject
 	Position3 []PositionItem `json:"position3"` // room
+	Icons []string `json:"icons"` // icons
 }
 
 type PositionItem struct {
@@ -111,15 +112,16 @@ type TimetableDay struct {
 	Lessons []Lesson
 }
 type Lesson struct {
-	IDs     []int `json:"ids"`
-	Start   time.Time
-	End     time.Time
-	Type    string
-	Status  string
-	Notes   string
-	Teacher ChangableEntry
-	Subject ChangableEntry
-	Room    ChangableEntry
+    IDs     []int `json:"ids"`
+    Start   time.Time
+    End     time.Time
+    Type    string
+    Status  string
+    Notes   string
+    Icons   []string
+    Teacher ChangableEntry
+    Subject ChangableEntry
+    Room    ChangableEntry
 }
 type ChangableEntry struct {
 	Current VariableString
