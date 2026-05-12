@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
+import pjson from "../../package.json";
+
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -24,11 +26,22 @@ export default function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 px-8 gap-6">
-      <div className="mb-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-white">👁️Iris</h1>
-        <p className="text-zinc-500 text-sm mt-1 tracking-widest uppercase">
-          WebUntis
-        </p>
+      <div className="mb-4 text-center flex flex-row items-center">
+        <img
+          className="mr-5 "
+          width={64}
+          height={64}
+          src="/favicon.ico"
+          alt="IRIS"
+        />
+        <div className="pl-5 border-l-2 border-white flex items-start justify-center flex-col">
+          <h1 className="text-4xl font-thin tracking-widest text-white">
+            iris
+          </h1>
+          <p className="text-zinc-500 text-xs mt-1 tracking-widest uppercase">
+            insights for WebUntis
+          </p>
+        </div>
       </div>
 
       <div className="w-full space-y-3">
@@ -57,6 +70,10 @@ export default function Login() {
       >
         {loading ? "Anmelden…" : "Anmelden"}
       </button>
+      <footer className="text-zinc-500 text-xs mt-3 tracking-widest">
+        <p>&copy; {new Date().getFullYear()} crwntec</p>
+        <p className="text-center">v{pjson.version}</p>
+      </footer>
     </div>
   );
 }

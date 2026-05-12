@@ -3,11 +3,14 @@ package untis
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -78,6 +81,48 @@ func (c *Client) newAuthedRequest(ctx context.Context, method, url string) (*htt
 	req.Header.Set("Authorization", "Bearer "+c.Session.Token)
 	req.Header.Set("Accept", "application/json, text/plain, */*")
 	return req, nil
+}
+func isConnectionResetError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// Check for common connection reset patterns
+	errStr := err.Error()
+	return strings.Contains(errStr, "connection reset by peer") ||
+		strings.Contains(errStr, "wsarecv") ||
+		strings.Contains(errStr, "broken pipe") ||
+		strings.Contains(errStr, "EOF") ||
+		errors.Is(err, net.ErrClosed)
+}
+func (c *Client) doRequestWithRetry(ctx context.Context, req *http.Request, maxRetries int) (*http.Response, error) {
+	var lastErr error
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		// Add Connection: close header on retry to force new TCP connection
+		if attempt > 0 {
+			req.Header.Set("Connection", "close")
+			// Small backoff before retry
+			select {
+			case <-time.After(time.Duration(attempt) * 500 * time.Millisecond):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+
+		resp, err := c.http.Do(req)
+		if err == nil {
+			return resp, nil
+		}
+
+		lastErr = err
+		if !isConnectionResetError(err) {
+			// Non-retryable error
+			return nil, err
+		}
+		// Retry on connection reset
+	}
+
+	return nil, fmt.Errorf("request failed after %d retries: %w", maxRetries, lastErr)
 }
 
 func extractSchoolID(cookies []*http.Cookie) (string, error) {
@@ -222,7 +267,7 @@ func (c *Client) GetTimetable(ctx context.Context, info UntisInfo, start, end st
 	req.Header.Set("Accept", "application/json, text/plain, */*")
 	req.Header.Set("Authorization", "Bearer "+c.Session.Token)
 
-	resp, err := c.http.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req, 4)
 	if err != nil {
 		return Timetable{}, fmt.Errorf("fetching timetable failed: %w", err)
 	}
@@ -259,7 +304,7 @@ func (c *Client) GetAbsences(ctx context.Context, info UntisInfo, start, end str
 	q.Add("excuseStatusId", "-1")
 	req.URL.RawQuery = q.Encode()
 
-	resp, err := c.http.Do(req)
+	resp, err := c.doRequestWithRetry(ctx, req, 4)
 	if err != nil {
 		return Absences{}, fmt.Errorf("fetching absences failed: %w", err)
 	}

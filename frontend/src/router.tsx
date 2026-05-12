@@ -1,15 +1,9 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { useAuth } from "./hooks/useAuth";
 import Absences from "./pages/Absences";
 import Login from "./pages/Login";
 import Layout from "./layout";
 import TimetableStats from "./pages/TimetableStats";
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn } = useAuth();
-  if (!isLoggedIn) return <Navigate to="/login" />;
-  return children;
-}
+import ProtectedRoute from "./ProtectedRoute";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },

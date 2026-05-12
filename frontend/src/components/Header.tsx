@@ -1,23 +1,43 @@
 import { useLocation } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
 const titles: Record<string, string> = {
   "/timetable": "Stundenplan",
   "/absences": "Fehlzeiten",
+  "/stats": "Statistik",
 };
 
 export default function Header() {
   const { pathname } = useLocation();
-  const title = titles[pathname] ?? "Iris";
+  const title = titles[pathname] ?? "Dashboard";
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
 
   return (
-    <header className="bg-zinc-950 text-white px-4 pt-10 pb-4 flex items-center justify-between border-b border-zinc-900">
-      <div>
-        <p className="text-xs text-zinc-600 uppercase tracking-widest mb-0.5">
-          Iris
-        </p>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+    <header className="bg-zinc-950 text-white px-6 pt-8 pb-5 flex items-center justify-between border-b border-zinc-900">
+      {/* Left identity block (matches login branding) */}
+      <div className="flex flex-row items-center justify-between">
+        <img src="/favicon.ico" alt="IRIS" className="w-8 h-8" />
+        <div className="ml-2 flex flex-col">
+          <p className="text-[10px] text-zinc-500 tracking-[0.3em] uppercase">
+            iris
+          </p>
+          <h1 className="text-lg font-medium tracking-tight text-white">
+            {title}
+          </h1>
+        </div>
       </div>
-      <span className="text-2xl opacity-60">👁️</span>
+
+      {/* Right action */}
+      <button
+        onClick={logout}
+        className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+      >
+        <LogOut size={18} />
+      </button>
     </header>
   );
 }

@@ -29,3 +29,8 @@ export interface Stats {
   bySubject: SubjectStats[];
   byTeacher: TeacherStats[];
 }
+
+export interface DateRange {
+  start: Date;
+  end: Date;
+}

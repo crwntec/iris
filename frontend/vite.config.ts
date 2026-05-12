@@ -12,17 +12,19 @@ export default defineConfig({
       manifest: {
         name: "Iris",
         short_name: "Iris",
-        theme_color: "#ffffff",
+        theme_color: "#09090b",
+        background_color: "#09090b",
         display: "standalone",
         start_url: "/",
+
         icons: [
           {
-            src: "icon-192.png",
+            src: "/android/launchericon-192x192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "icon-512.png",
+            src: "/android/launchericon-512x512.png",
             sizes: "512x512",
             type: "image/png",
           },
