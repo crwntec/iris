@@ -82,47 +82,76 @@ func (c *Client) newAuthedRequest(ctx context.Context, method, url string) (*htt
 	req.Header.Set("Accept", "application/json, text/plain, */*")
 	return req, nil
 }
-func isConnectionResetError(err error) bool {
+func shouldRetry(err error) bool {
 	if err == nil {
 		return false
 	}
-	// Check for common connection reset patterns
-	errStr := err.Error()
-	return strings.Contains(errStr, "connection reset by peer") ||
-		strings.Contains(errStr, "wsarecv") ||
-		strings.Contains(errStr, "broken pipe") ||
-		strings.Contains(errStr, "EOF") ||
-		errors.Is(err, net.ErrClosed)
+
+	if errors.Is(err, net.ErrClosed) {
+		return true
+	}
+
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return true
+	}
+
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		return shouldRetry(urlErr.Err)
+	}
+
+	return false
 }
-func (c *Client) doRequestWithRetry(ctx context.Context, req *http.Request, maxRetries int) (*http.Response, error) {
+func (c *Client) doRequestWithRetry(
+	ctx context.Context,
+	req *http.Request,
+	maxRetries int,
+) (*http.Response, error) {
+
 	var lastErr error
 
 	for attempt := 0; attempt <= maxRetries; attempt++ {
-		// Add Connection: close header on retry to force new TCP connection
+
+		cloned := req.Clone(ctx)
+
+		if req.GetBody != nil && req.Body != nil {
+			body, err := req.GetBody()
+			if err != nil {
+				return nil, err
+			}
+			cloned.Body = body
+		}
+
 		if attempt > 0 {
-			req.Header.Set("Connection", "close")
-			// Small backoff before retry
+			cloned.Header.Set("Connection", "close")
+
+			backoff := time.Duration(attempt) * 500 * time.Millisecond
+
 			select {
-			case <-time.After(time.Duration(attempt) * 500 * time.Millisecond):
+			case <-time.After(backoff):
 			case <-ctx.Done():
 				return nil, ctx.Err()
 			}
 		}
 
-		resp, err := c.http.Do(req)
+		resp, err := c.http.Do(cloned)
 		if err == nil {
 			return resp, nil
 		}
 
 		lastErr = err
-		if !isConnectionResetError(err) {
-			// Non-retryable error
+
+		if !shouldRetry(err) {
 			return nil, err
 		}
-		// Retry on connection reset
 	}
 
-	return nil, fmt.Errorf("request failed after %d retries: %w", maxRetries, lastErr)
+	return nil, fmt.Errorf(
+		"request failed after %d retries: %w",
+		maxRetries,
+		lastErr,
+	)
 }
 
 func extractSchoolID(cookies []*http.Cookie) (string, error) {
@@ -170,12 +199,19 @@ func (c *Client) Login(username, password string) error {
 		return fmt.Errorf("login failed: %w", err)
 	}
 	c.http.Jar = newJar
-	resp, err := c.http.PostForm(c.config.BaseURL+"/WebUntis/j_spring_security_check", url.Values{
+	req, err := http.NewRequest("POST", c.config.BaseURL+"/WebUntis/j_spring_security_check", nil)
+	if err != nil {
+		return fmt.Errorf("login request failed: %w", err)
+	}
+	req.Body = io.NopCloser(strings.NewReader(url.Values{
 		"school":     {c.config.SchoolName},
 		"j_username": {username},
 		"j_password": {password},
 		"token":      {""},
-	})
+	}.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx := context.Background()
+	resp, err := c.doRequestWithRetry(ctx, req, 4)
 	if err != nil {
 		return fmt.Errorf("login request failed: %w", err)
 	}

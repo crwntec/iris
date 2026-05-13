@@ -1,7 +1,10 @@
 services:
   valkey:
+    container_name: valkey
     image: valkey/valkey:8-alpine
     restart: unless-stopped
+    ports:
+      - "6379:6379"
     volumes:
       - valkey_data:/data
 
@@ -9,16 +12,22 @@ services:
     build: ./backend
     restart: unless-stopped
     env_file: ./backend/.env
+    container_name: iris-backend
     depends_on:
       - valkey
     environment:
       VALKEY_URL: valkey:6379
+    ports:
+      - "8080:8080"
 
   frontend:
     build: ./frontend
     restart: unless-stopped
     depends_on:
       - backend
+    ports:
+      - "3000:80"
+    container_name: iris-frontend
 
 volumes:
   valkey_data:
