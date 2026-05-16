@@ -4,11 +4,12 @@ import { urlBase64ToUint8Array } from "@/util";
 export function usePushSubscription() {
   const subscribe = async (): Promise<PushSubscription | null> => {
     try {
+      const { publicKey } = await api.getPushVapidKey();
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(
-          import.meta.env.VITE_VAPID_PUBLIC_KEY,
+          publicKey,
         ),
       });
       return sub;

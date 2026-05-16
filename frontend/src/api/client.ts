@@ -50,4 +50,7 @@ export const api = {
     request("/push/test", {
       method: "POST",
     }),
+   getPushVapidKey: ():   Promise<{ publicKey: string }> =>
+    request("/push/vapid-public-key"),
+ 
 };
