@@ -1,6 +1,6 @@
-import type { Absences, Timetable } from "../types/untis";
+import type { Absences, Timetable } from "@/types/untis";
 
-const BASE_URL = import.meta.env.DEV ? "http://localhost:8080" : "/api";
+const BASE_URL = "/api";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("token");
@@ -19,7 +19,9 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) throw new Error(await res.text());
-
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return null as T;
+  }
   return res.json();
 }
 export const api = {
@@ -34,4 +36,18 @@ export const api = {
 
   getAbsences: (start: string, end: string): Promise<Absences> =>
     request(`/untis/absences?start=${start}&end=${end}`),
+
+  savePushSubscription: (subscription: PushSubscriptionJSON) =>
+    request("/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify(subscription),
+    }),
+  unsubscribePush: () =>
+    request("/push/unsubscribe", {
+      method: "POST",
+    }),
+  testPush: () =>
+    request("/push/test", {
+      method: "POST",
+    }),
 };

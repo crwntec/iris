@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { api } from "@/api/client";
 import {
   cn,
   formatDateRange,
@@ -7,15 +7,11 @@ import {
   formatUntisTime,
   getDateRangeForPreset,
   PRESETS,
-} from "../util";
+} from "@/util";
 import { useMemo, useState } from "react";
 import { SortAsc, SortDesc, RefreshCw } from "lucide-react";
-import type { Absence } from "../types/untis";
-import {
-  type ApiError,
-  ErrorState,
-  getErrorMessage,
-} from "../components/Error";
+import type { Absence } from "@/types/untis";
+import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
 // ─────────────────────────────────────────────────────────────
 // Subcomponents
 // ─────────────────────────────────────────────────────────────

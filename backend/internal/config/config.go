@@ -13,7 +13,9 @@ type Config struct {
 	JWTSecret  string
 	AESKey     string
 
-	UntisConfig untis.Config
+	UntisConfig     untis.Config
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
 }
 
 func Load() Config {
@@ -32,6 +34,8 @@ func Load() Config {
 			BaseURL:    mustGetEnv("BASE_URL"),
 			SchoolName: mustGetEnv("SCHOOL_NAME"),
 		},
+		VAPIDPublicKey:  mustGetEnv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey: mustGetEnv("VAPID_PRIVATE_KEY"),
 	}
 }
 

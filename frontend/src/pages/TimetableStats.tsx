@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { api } from "@/api/client";
 import { useMemo, useState } from "react";
-import type { Lesson, Timetable } from "../types/untis";
-import type { Stats, SubjectStats, TeacherStats } from "../types/app";
-import { cn, formatDateRange, getDateRangeForPreset, PRESETS } from "../util";
+import type { Lesson, Timetable } from "@/types/untis";
+import type { Stats, SubjectStats, TeacherStats } from "@/types/app";
+import { cn, formatDateRange, getDateRangeForPreset, PRESETS } from "@/util";
 import { RefreshCw, AlertCircle } from "lucide-react";
-import { type ApiError, getErrorMessage } from "../components/Error";
+import { type ApiError, getErrorMessage } from "@/components/Error";
 
 // ─────────────────────────────────────────────────────────────
 // Existing Helpers (unchanged)

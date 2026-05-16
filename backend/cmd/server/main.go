@@ -18,7 +18,8 @@ func main() {
 	cfg := config.Load()
 	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
 	if err != nil {
-		panic(err)
+		slog.Error("Failed to connect to valkey. Exiting...")
+		os.Exit(1)
 	}
 	defer client.Close()
 

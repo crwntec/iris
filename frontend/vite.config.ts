@@ -9,6 +9,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       manifest: {
         name: "Iris",
         short_name: "Iris",
@@ -32,4 +35,20 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
+  server: {
+    allowedHosts: true,
+    host: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
 });

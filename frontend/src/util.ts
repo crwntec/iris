@@ -88,3 +88,10 @@ export function getDateRangeForPreset(
   const toISO = (d: Date) => d.toISOString().split("T")[0];
   return { start: toISO(start), end: toISO(end) };
 }
+
+export function urlBase64ToUint8Array(base64: string) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const base64url = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64url);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}

@@ -1,9 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import Absences from "./pages/Absences";
-import Login from "./pages/Login";
-import Layout from "./layout";
-import TimetableStats from "./pages/TimetableStats";
-import ProtectedRoute from "./ProtectedRoute";
+import Absences from "@/pages/Absences";
+import Login from "@/pages/Login";
+import Layout from "@/layout";
+import TimetableStats from "@/pages/TimetableStats";
+import Alerts from "@/pages/Alerts";
+import ProtectedRoute from "@/ProtectedRoute";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/absences" replace /> },
       { path: "absences", element: <Absences /> },
       { path: "stats", element: <TimetableStats /> },
+      { path: "alerts", element: <Alerts /> },
     ],
   },
 ]);
