@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { useMemo, useState } from "react";
 import type { TeacherStats } from "@/types/app";
-import { cn, formatDateRange, getDateRangeForPreset, PRESETS } from "@/util";
+import { cn, formatDateRange, getDateRangeForPreset } from "@/util";
 import { RefreshCw } from "lucide-react";
 import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
 import { computeStats, getBarColor } from "@/util/stats";
 import { Section, StatCard } from "@/components/Stats";
+import PresetButtons from "@/components/PresetButtons";
 
 const maxBar = (vals: number[]) => Math.max(...vals, 1);
 
@@ -93,23 +94,11 @@ export default function TimetableStats() {
       </div>
 
       {/* Preset Buttons */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {PRESETS.map((label) => (
-          <button
-            key={label}
-            onClick={() => setActivePreset(label)}
-            disabled={isLoading}
-            className={cn(
-              "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50",
-              activePreset === label
-                ? "bg-zinc-100 text-zinc-900 shadow-sm"
-                : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <PresetButtons
+        activePreset={activePreset}
+        setActivePreset={setActivePreset}
+        isLoading={isLoading}
+      />
 
       {/* Hero Stats */}
       <div className="flex flex-wrap gap-3">

@@ -17,6 +17,7 @@ import {
   AbsenceCardSkeleton,
   StatusAccent,
 } from "@/components/Absences";
+import PresetButtons from "@/components/PresetButtons";
 // ─────────────────────────────────────────────────────────────
 // Main Component
 // ─────────────────────────────────────────────────────────────
@@ -84,25 +85,13 @@ export default function Absences() {
           )}
         </div>
 
-        {/* Presets + Date Range */}
         <div>
-          <div className="flex gap-2 overflow-x-auto">
-            {PRESETS.map((label) => (
-              <button
-                key={label}
-                onClick={() => setActivePreset(label)}
-                disabled={isLoading}
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50",
-                  activePreset === label
-                    ? "bg-zinc-100 text-zinc-900"
-                    : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* Preset Buttons */}
+          <PresetButtons
+            activePreset={activePreset}
+            setActivePreset={setActivePreset}
+            isLoading={isLoading}
+          />
           <div className="flex items-center gap-2 mt-1.5">
             <p className="text-xs text-zinc-500">
               {formatDateRange(startDate, endDate)}

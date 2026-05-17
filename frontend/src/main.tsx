@@ -20,7 +20,42 @@ registerSW({
     console.log("App ready offline");
   },
 });
+const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
+if (isTouchDevice) {
+  let startX = 0;
+  let startY = 0;
+
+  window.addEventListener(
+    "touchstart",
+    (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    },
+    { passive: true },
+  );
+
+  window.addEventListener(
+    "touchmove",
+    (e) => {
+      const x = e.touches[0].clientX;
+      const y = e.touches[0].clientY;
+      const dx = x - startX;
+      const dy = y - startY;
+
+      const screenWidth = window.innerWidth;
+      const edgeThreshold = 24; // px from left/right edge
+      const nearEdge =
+        startX < edgeThreshold || startX > screenWidth - edgeThreshold;
+
+      // Block only horizontal swipes near screen edges (browser nav zone)
+      if (nearEdge && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 4) {
+        e.preventDefault();
+      }
+    },
+    { passive: false },
+  );
+}
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <RouterProvider router={router} />

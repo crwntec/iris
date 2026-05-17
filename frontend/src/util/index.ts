@@ -21,7 +21,7 @@ export function formatDateRange(start: string, end: string): string {
   return `${s.toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })} – ${e.toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })}`;
 }
 
-export const PRESETS = ["7T", "30T", "Monat", "Woche", "Semester"];
+export const PRESETS = ["7T", "30T", "Monat", "Semester"];
 
 // ─────────────────────────────────────────────────────────────
 // Date Helpers

@@ -11,3 +11,61 @@ html {
 body {
     font-family: "Inter", sans-serif;
 }
+
+/* index.css */
+
+/* ─── Scrollbar hiding ─── */
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+    display: none;
+}
+
+/* ─── Root layout ─── */
+html,
+body,
+#root {
+    overflow-x: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+/* ─── Disable zoom ─── */
+html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* ─── Disable text selection & callouts ─── */
+* {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Re-enable for inputs */
+input,
+textarea,
+[contenteditable] {
+    -webkit-user-select: auto;
+    user-select: auto;
+}
+
+/* ─── iOS: prevent overscroll bounce ─── */
+@supports (-webkit-touch-callout: none) {
+    body {
+        overscroll-behavior-x: none;
+        overscroll-behavior-y: none;
+    }
+}
+
+/* ─── Touch devices: vertical pan only ─── */
+@media (hover: none) and (pointer: coarse) {
+    body {
+        touch-action: pan-y;
+    }
+}

@@ -7,20 +7,6 @@ declare const clients: Clients;
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-async function getBadgeCount(): Promise<number> {
-  try {
-    const cache = await caches.open("badge-cache");
-    const response = await cache.match("badge-count");
-    if (response) {
-      const text = await response.text();
-      return parseInt(text, 10) || 0;
-    }
-  } catch {
-    // Cache nicht verfügbar
-  }
-  return 0;
-}
-
 self.addEventListener("push", (event) => {
   if (!event.data) return;
 
@@ -34,22 +20,24 @@ self.addEventListener("push", (event) => {
         badge: "/android/launchericon-192x192.png",
         data: data.url,
       });
-      if ("setAppBadge" in navigator) {
-        try {
-          const curr = await getBadgeCount();
-          await navigator.setAppBadge(curr + 1);
-        } catch (e) {
-          console.error("Failed to set badge:", e);
-        }
-      }
     })(),
   );
+  if ("setAppBadge" in self) {
+    (
+      self as unknown as ServiceWorkerGlobalScope & {
+        setAppBadge: (n?: number) => Promise<void>;
+      }
+    )
+      .setAppBadge()
+      .catch(() => {});
+  }
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  if ("clearAppBadge" in navigator) {
-    event.waitUntil(navigator.clearAppBadge());
+  if ("clearAppBadge" in self) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (self as any).clearAppBadge().catch(() => {});
   }
   event.waitUntil(clients.openWindow(event.notification.data ?? "/"));
 });

@@ -4,9 +4,9 @@ import Header from "@/components/Header";
 
 export default function Layout() {
   return (
-    <div className="flex flex-col min-h-dvh bg-zinc-950 text-white">
+    <div className="flex flex-col h-dvh bg-zinc-950 text-white overflow-hidden">
       <Header />
-      <main className="flex flex-col flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <Outlet />
       </main>
       <BottomNav />

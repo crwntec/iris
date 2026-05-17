@@ -1,16 +1,6 @@
-import { useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 
-const titles: Record<string, string> = {
-  "/absences": "Fehlzeiten",
-  "/stats": "Statistik",
-  "/alerts": "Nachrichten",
-};
-
 export default function Header() {
-  const { pathname } = useLocation();
-  const title = titles[pathname] ?? "Dashboard";
-
   const logout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
@@ -22,12 +12,7 @@ export default function Header() {
       <div className="flex flex-row items-center justify-between">
         <img src="/favicon.ico" alt="IRIS" className="w-8 h-8" />
         <div className="ml-2 flex flex-col">
-          <p className="text-[10px] text-zinc-500 tracking-[0.3em] uppercase">
-            iris
-          </p>
-          <h1 className="text-lg font-medium tracking-tight text-white">
-            {title}
-          </h1>
+          <p className="text-md text-white tracking-[0.3em] uppercase">iris</p>
         </div>
       </div>
 
