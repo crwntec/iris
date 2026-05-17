@@ -6,7 +6,6 @@ import {
   formatUntisDate,
   formatUntisTime,
   getDateRangeForPreset,
-  PRESETS,
 } from "@/util";
 import { useMemo, useState } from "react";
 import { SortAsc, SortDesc, RefreshCw } from "lucide-react";
