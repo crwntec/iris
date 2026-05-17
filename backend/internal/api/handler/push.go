@@ -87,3 +87,10 @@ func (h *PushHandler) Test(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+func (h *PushHandler) GetVapidPublicKey(w http.ResponseWriter, r *http.Request) {
+  w.Header().Set("Content-Type", "application/json")
+  json.NewEncoder(w).Encode(map[string]string{
+    "publicKey": h.Config.VAPIDPublicKey,
+  })
+}
+

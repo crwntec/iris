@@ -52,4 +52,7 @@ export const api = {
       method: "POST",
     }),
   getChangeLog: () => request<ChangeLogEntry[]>("/untis/changelog"),
+   getPushVapidKey: ():   Promise<{ publicKey: string }> =>
+    request("/push/vapid-public-key"),
+ 
 };

@@ -32,6 +32,6 @@ func NewRouter(vk valkey.Client, config config.Config) http.Handler {
 	mux.Handle("POST /push/subscribe", protected(pushHandler.Subscribe))
 	mux.Handle("POST /push/unsubscribe", protected(pushHandler.Unsubscribe))
 	mux.Handle("POST /push/test", protected(pushHandler.Test))
-
+	mux.HandleFunc("GET /push/vapid-public-key", pushHandler.GetVapidPublicKey)
 	return middleware.CORS(mux)
 }
