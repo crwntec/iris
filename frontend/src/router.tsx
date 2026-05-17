@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import Absences from "@/pages/Absences";
 import Login from "@/pages/Login";
 import Layout from "@/layout";
-import TimetableStats from "@/pages/TimetableStats";
+import TimetableStats from "@/pages/Stats";
 import Alerts from "@/pages/Alerts";
 import ProtectedRoute from "@/ProtectedRoute";
 

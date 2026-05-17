@@ -4,7 +4,7 @@ import { ClipboardList, BarChart2, BellIcon } from "lucide-react";
 const links = [
   { to: "/absences", label: "Fehlstunden", Icon: ClipboardList },
   { to: "/stats", label: "Statistik", Icon: BarChart2 },
-  { to: "/alerts", label: "Alarme", Icon: BellIcon },
+  { to: "/alerts", label: "Nachrichten", Icon: BellIcon },
 ];
 
 export default function BottomNav() {

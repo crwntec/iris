@@ -1,0 +1,159 @@
+package polling
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
+
+	"github.com/crwntec/iris/backend/internal/config"
+	"github.com/crwntec/iris/backend/internal/diff"
+	"github.com/crwntec/iris/backend/internal/store"
+	"github.com/crwntec/iris/backend/internal/untis"
+)
+
+type Service struct {
+	ctx          context.Context
+	store        *store.Store
+	pollInterval time.Duration
+	config       config.Config
+}
+
+func NewService(ctx context.Context, config config.Config, store *store.Store, pollInterval time.Duration) *Service {
+	return &Service{
+		ctx:          ctx,
+		store:        store,
+		pollInterval: pollInterval,
+		config:       config,
+	}
+}
+
+const maxChangeLogEntries = 20
+
+type ChangeLogEntry struct {
+	DetectedAt time.Time         `json:"detectedAt"`
+	Changes    []diff.LessonDiff `json:"changes"`
+}
+
+func (s *Service) appendChanges(username string, d diff.TimetableDiff) error {
+	entry := ChangeLogEntry{
+		DetectedAt: time.Now(),
+		Changes:    d.Changes,
+	}
+	encoded, err := json.Marshal(entry)
+	if err != nil {
+		return fmt.Errorf("marshalling change entry: %w", err)
+	}
+	return s.store.AppendChange(s.ctx, "changes:"+username, encoded, maxChangeLogEntries)
+}
+
+func (s *Service) processUser(username string) error {
+	session, err := untis.AuthenticatedSessionFromStore(s.ctx, s.store, s.config.UntisBaseURL, s.config.UntisSchoolName, s.config.AESKey, username)
+	if err != nil {
+		return err
+	}
+
+	start := todayStr()
+	end := time.Now().AddDate(0, 0, 7).Format("2006-01-02")
+	tt, err := session.Client.GetTimetable(s.ctx, session.Info, start, end)
+	if err != nil {
+		return err
+	}
+	encoded, err := json.Marshal(tt)
+	if err != nil {
+		return fmt.Errorf("marshalling timetable: %w", err)
+	}
+	newHash := fmt.Sprintf("%x", sha256.Sum256(encoded))
+	hash_key := "timetable_hash:" + username
+	tt_key := "timetable:" + username
+	prevHash, err := s.store.Get(s.ctx, hash_key)
+	if err != nil {
+		// Key missing on first run — store and move on.
+		// slog.Info("storing initial timetable snapshot", "username", username)
+		err := s.store.Set(s.ctx, hash_key, newHash, 6*time.Minute)
+		if err != nil {
+			return fmt.Errorf("storing timetable hash: %w", err)
+		}
+		err = s.store.Set(s.ctx, tt_key, string(encoded), 6*time.Minute)
+		if err != nil {
+			return fmt.Errorf("storing timetable: %w", err)
+		}
+		return nil
+	}
+
+	if prevHash == newHash {
+		slog.Debug("timetable unchanged", "username", username)
+		return nil
+	}
+	prevTTString, err := s.store.Get(s.ctx, tt_key)
+	if err != nil {
+		return fmt.Errorf("getting previous timetable: %w", err)
+	}
+	var prevTimetable untis.Timetable
+	if err := json.Unmarshal([]byte(prevTTString), &prevTimetable); err != nil {
+		return fmt.Errorf("parsing previous timetable: %w", err)
+	}
+	var newTimetable untis.Timetable
+	if err := json.Unmarshal([]byte(string(encoded)), &newTimetable); err != nil {
+		return fmt.Errorf("parsing new timetable: %w", err)
+	}
+	diff := diff.Compare(prevTimetable, newTimetable)
+	slog.Info("timetable changed, sending notification", "username", username, "changes", diff)
+	if err := s.store.Set(s.ctx, hash_key, newHash, 6*time.Minute); err != nil {
+		return fmt.Errorf("updating timetable hash: %w", err)
+	}
+	if err := s.store.Set(s.ctx, tt_key, string(encoded), 6*time.Minute); err != nil {
+		return fmt.Errorf("updating timetable: %w", err)
+	}
+	if err := s.appendChanges(username, diff); err != nil {
+		return fmt.Errorf("appending changes: %w", err)
+	}
+
+	return nil
+
+}
+
+func (s *Service) Start() {
+	slog.Info("starting timetable polling service", "poll_interval", s.pollInterval)
+	ticker := time.NewTicker(s.pollInterval)
+	defer ticker.Stop()
+	s.poll()
+	for {
+		select {
+		case <-ticker.C:
+			s.poll()
+		case <-s.ctx.Done():
+			slog.Info("stopping timetable polling service")
+			return
+		}
+	}
+}
+
+func (s *Service) poll() {
+	slog.Info("polling timetable for changes")
+	subscribedUsers, err := s.store.Keys(s.ctx, "push:*")
+	if err != nil {
+		slog.Error("failed to get subscribed users", "error", err)
+		return
+	}
+
+	var wg sync.WaitGroup
+	for _, userKey := range subscribedUsers {
+		wg.Add(1)
+		go func(userKey string) {
+			defer wg.Done()
+			username := userKey[len("push:"):]
+			if err := s.processUser(username); err != nil {
+				slog.Error("failed to process user", "username", username, "error", err)
+			}
+		}(userKey)
+	}
+	wg.Wait()
+}
+
+func todayStr() string {
+	return time.Now().Format("2006-01-02")
+}

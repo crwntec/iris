@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 
-	"github.com/crwntec/iris/backend/internal/untis"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -13,7 +12,10 @@ type Config struct {
 	JWTSecret  string
 	AESKey     string
 
-	UntisConfig     untis.Config
+	// WebUntis connection — formerly untis.Config
+	UntisBaseURL    string
+	UntisSchoolName string
+
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
 }
@@ -21,19 +23,16 @@ type Config struct {
 func Load() Config {
 	jwtSecret := mustGetEnv("JWT_SECRET")
 	aesKey := mustGetEnv("AES_KEY")
-	// AES-256 braucht exakt 32 Bytes
 	if len(aesKey) != 32 {
 		panic("AES_KEY must be exactly 32 characters")
 	}
 	return Config{
-		ServerPort: getEnv("SERVER_PORT", "8080"),
-		ValkeyURL:  getEnv("VALKEY_URL", ""),
-		JWTSecret:  jwtSecret,
-		AESKey:     aesKey,
-		UntisConfig: untis.Config{
-			BaseURL:    mustGetEnv("BASE_URL"),
-			SchoolName: mustGetEnv("SCHOOL_NAME"),
-		},
+		ServerPort:      getEnv("SERVER_PORT", "8080"),
+		ValkeyURL:       getEnv("VALKEY_URL", ""),
+		JWTSecret:       jwtSecret,
+		AESKey:          aesKey,
+		UntisBaseURL:    mustGetEnv("BASE_URL"),
+		UntisSchoolName: mustGetEnv("SCHOOL_NAME"),
 		VAPIDPublicKey:  mustGetEnv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey: mustGetEnv("VAPID_PRIVATE_KEY"),
 	}

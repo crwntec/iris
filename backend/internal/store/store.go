@@ -63,3 +63,15 @@ func (s *Store) HSet(ctx context.Context, key string, fields map[string]string) 
 	}
 	return s.client.Do(ctx, cmd.Build()).Error()
 }
+
+func (s *Store) AppendChange(ctx context.Context, key string, value []byte, maxEntries int64) error {
+	if err := s.client.Do(ctx, s.client.B().Lpush().Key(key).Element(string(value)).Build()).Error(); err != nil {
+		return err
+	}
+	return s.client.Do(ctx, s.client.B().Ltrim().Key(key).Start(0).Stop(maxEntries-1).Build()).Error()
+}
+
+// GetChanges returns all entries in the list, newest first.
+func (s *Store) GetChanges(ctx context.Context, key string) ([]string, error) {
+	return s.client.Do(ctx, s.client.B().Lrange().Key(key).Start(0).Stop(-1).Build()).AsStrSlice()
+}

@@ -11,6 +11,8 @@ import (
 
 	"github.com/crwntec/iris/backend/internal/api"
 	"github.com/crwntec/iris/backend/internal/config"
+	"github.com/crwntec/iris/backend/internal/polling"
+	"github.com/crwntec/iris/backend/internal/store"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -43,6 +45,8 @@ func main() {
 		}
 	}()
 	slog.Info("server started", "port", cfg.ServerPort)
+	pollingService := polling.NewService(context.Background(), cfg, store.New(client), time.Minute*5)
+	pollingService.Start()
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit

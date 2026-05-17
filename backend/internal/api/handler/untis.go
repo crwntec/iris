@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/crwntec/iris/backend/internal"
@@ -17,46 +16,32 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-// ── gemeinsame Basis ──────────────────────────────────────────
+// ── shared base ───────────────────────────────────────────────
 
 type base struct {
 	store *store.Store
 	conf  config.Config
 }
 
-func (b *base) clientFromRequest(r *http.Request) (*untis.Client, untis.UntisInfo, error) {
+func (b *base) session(r *http.Request) (*untis.AuthenticatedSession, error) {
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
-		return nil, untis.UntisInfo{}, fmt.Errorf("unauthorized")
+		return nil, fmt.Errorf("unauthorized")
 	}
-	result, err := b.store.HGetAll(r.Context(), "user:"+username)
-	if err != nil {
-		return nil, untis.UntisInfo{}, fmt.Errorf("session not found")
-	}
-	decoded, err := base64.StdEncoding.DecodeString(result["password"])
-	if err != nil {
-		return nil, untis.UntisInfo{}, err
-	}
-	password, err := internal.DecryptAES(decoded, []byte(b.conf.AESKey))
-	if err != nil {
-		return nil, untis.UntisInfo{}, err
-	}
-	client, err := untis.ClientFromSession(
-		b.conf.UntisConfig,
-		result["token"], result["sessionID"], result["schoolID"],
-		username, string(password),
+	return untis.AuthenticatedSessionFromStore(
+		r.Context(),
+		b.store,
+		b.conf.UntisBaseURL,
+		b.conf.UntisSchoolName,
+		b.conf.AESKey,
+		username,
 	)
-	if err != nil {
-		return nil, untis.UntisInfo{}, err
-	}
-	userID, _ := strconv.Atoi(result["userID"])
-	return client, untis.UntisInfo{UserID: userID}, nil
 }
 
-func (b *base) updateSession(ctx context.Context, username string, client *untis.Client) {
-	b.store.HSet(ctx, "user:"+username, map[string]string{
-		"sessionID": client.Session.SessionID,
-		"token":     client.Session.Token,
+func (b *base) persistSession(ctx context.Context, s *untis.AuthenticatedSession) {
+	b.store.HSet(ctx, "user:"+s.Username, map[string]string{
+		"sessionID": s.Client.Session.SessionID,
+		"token":     s.Client.Session.Token,
 	})
 }
 
@@ -82,7 +67,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client, err := untis.NewClient(h.conf.UntisConfig)
+	client, err := untis.NewClient(untis.Config{
+		BaseURL:    h.conf.UntisBaseURL,
+		SchoolName: h.conf.UntisSchoolName,
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -103,14 +91,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fields := map[string]string{
+	if err := h.store.HSet(r.Context(), "user:"+d.Username, map[string]string{
 		"sessionID": client.Session.SessionID,
 		"token":     client.Session.Token,
 		"password":  base64.StdEncoding.EncodeToString(ciphered),
 		"schoolID":  client.Session.SchoolID,
 		"userID":    fmt.Sprintf("%d", info.UserID),
-	}
-	if err := h.store.HSet(r.Context(), "user:"+d.Username, fields); err != nil {
+	}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -132,58 +119,93 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 type UntisHandler struct{ base }
 
-func NewUntisHandler(vk valkey.Client, conf config.Config) *UntisHandler {
-	return &UntisHandler{base{store: store.New(vk), conf: conf}}
+func NewUntisHandler(st *store.Store, conf config.Config) *UntisHandler {
+	return &UntisHandler{base{store: st, conf: conf}}
 }
 
 func (h *UntisHandler) GetTimetable(w http.ResponseWriter, r *http.Request) {
-	start, end := r.URL.Query().Get("start"), r.URL.Query().Get("end")
-	if !validDate(start) || !validDate(end) {
+	start := r.URL.Query().Get("start")
+	end := r.URL.Query().Get("end")
+	if _, err := time.Parse("2006-01-02", start); err != nil {
 		http.Error(w, "Malformed request", http.StatusBadRequest)
 		return
 	}
-	client, info, err := h.clientFromRequest(r)
+	if _, err := time.Parse("2006-01-02", end); err != nil {
+		http.Error(w, "Malformed request", http.StatusBadRequest)
+		return
+	}
+
+	s, err := h.session(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	tt, err := client.GetTimetable(r.Context(), info, start, end)
+
+	tt, err := s.Client.GetTimetable(r.Context(), s.Info, start, end)
 	if err != nil {
 		http.Error(w, "internal error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	username, _ := r.Context().Value("username").(string)
-	h.updateSession(r.Context(), username, client)
+	h.persistSession(r.Context(), s)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tt)
 }
 
 func (h *UntisHandler) GetAbsences(w http.ResponseWriter, r *http.Request) {
-	start, end := r.URL.Query().Get("start"), r.URL.Query().Get("end")
-	startP, err1 := time.Parse("2006-01-02", start)
-	endP, err2 := time.Parse("2006-01-02", end)
-	if err1 != nil || err2 != nil {
+	start := r.URL.Query().Get("start")
+	end := r.URL.Query().Get("end")
+	startParsed, err := time.Parse("2006-01-02", start)
+	if err != nil {
 		http.Error(w, "Malformed request", http.StatusBadRequest)
 		return
 	}
-	client, info, err := h.clientFromRequest(r)
+	endParsed, err := time.Parse("2006-01-02", end)
+	if err != nil {
+		http.Error(w, "Malformed request", http.StatusBadRequest)
+		return
+	}
+
+	s, err := h.session(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	absences, err := client.GetAbsences(r.Context(), info,
-		startP.Format("20060102"), endP.Format("20060102"))
+
+	absences, err := s.Client.GetAbsences(r.Context(), s.Info,
+		startParsed.Format("20060102"),
+		endParsed.Format("20060102"),
+	)
 	if err != nil {
 		http.Error(w, "internal error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	username, _ := r.Context().Value("username").(string)
-	h.updateSession(r.Context(), username, client)
+	h.persistSession(r.Context(), s)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(absences)
 }
 
-func validDate(s string) bool {
-	_, err := time.Parse("2006-01-02", s)
-	return err == nil
+func (h *UntisHandler) GetChanges(w http.ResponseWriter, r *http.Request) {
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	raw, err := h.store.GetChanges(r.Context(), "changes:"+username)
+	if err != nil {
+		http.Error(w, "internal error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Decode each stored JSON string into a real value so the response
+	// is a proper JSON array, not an array of escaped strings.
+	entries := make([]json.RawMessage, len(raw))
+	for i, s := range raw {
+		entries[i] = json.RawMessage(s)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(entries)
 }

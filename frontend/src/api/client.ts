@@ -1,3 +1,4 @@
+import type { ChangeLogEntry } from "@/types/app";
 import type { Absences, Timetable } from "@/types/untis";
 
 const BASE_URL = "/api";
@@ -50,4 +51,5 @@ export const api = {
     request("/push/test", {
       method: "POST",
     }),
+  getChangeLog: () => request<ChangeLogEntry[]>("/untis/changelog"),
 };

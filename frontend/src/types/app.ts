@@ -34,3 +34,30 @@ export interface DateRange {
   start: Date;
   end: Date;
 }
+
+export type LessonDiff = {
+  start: string; // ISO datetime string
+  end: string; // ISO datetime string
+  subject: string;
+  changes: LessonChange[];
+};
+
+export type LessonChange = {
+  field: LessonField;
+  before: string;
+  after: string;
+};
+
+export type LessonField =
+  | "status"
+  | "teacher"
+  | "subject"
+  | "room"
+  | "notes"
+  | "startTime"
+  | "endTime"
+  | "type";
+export interface ChangeLogEntry {
+  detectedAt: Date;
+  changes: LessonDiff[];
+}

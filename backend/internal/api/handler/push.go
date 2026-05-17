@@ -78,3 +78,12 @@ func (h *PushHandler) SendNotification(ctx context.Context, username, title, bod
 	}
 	return nil
 }
+
+func (h *PushHandler) Test(w http.ResponseWriter, r *http.Request) {
+	username, _ := r.Context().Value("username").(string)
+	if err := h.SendNotification(r.Context(), username, "Test Notification", "Push works!"); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

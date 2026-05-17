@@ -2,9 +2,9 @@ import { useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 
 const titles: Record<string, string> = {
-  "/timetable": "Stundenplan",
   "/absences": "Fehlzeiten",
   "/stats": "Statistik",
+  "/alerts": "Nachrichten",
 };
 
 export default function Header() {
