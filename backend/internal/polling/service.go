@@ -31,7 +31,7 @@ func NewService(ctx context.Context, config config.Config, store *store.Store, n
 		store:        store,
 		pollInterval: pollInterval,
 		config:       config,
-		notifier:     notifier
+		notifier:     notifier,
 	}
 }
 
