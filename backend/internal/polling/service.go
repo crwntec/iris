@@ -55,36 +55,49 @@ func (s *Service) appendChanges(username string, d diff.TimetableDiff) error {
 }
 
 func (s *Service) processUser(username string) error {
-	session, err := untis.AuthenticatedSessionFromStore(s.ctx, s.store, s.config.UntisBaseURL, s.config.UntisSchoolName, s.config.AESKey, username)
+	session, err := untis.AuthenticatedSessionFromStore(
+		s.ctx,
+		s.store,
+		s.config.UntisBaseURL,
+		s.config.UntisSchoolName,
+		s.config.AESKey,
+		username,
+	)
 	if err != nil {
 		return err
 	}
 
 	start := todayStr()
 	end := time.Now().AddDate(0, 0, 7).Format("2006-01-02")
+
 	tt, err := session.Client.GetTimetable(s.ctx, session.Info, start, end)
 	if err != nil {
 		return err
 	}
+
 	encoded, err := json.Marshal(tt)
 	if err != nil {
 		return fmt.Errorf("marshalling timetable: %w", err)
 	}
+
 	newHash := fmt.Sprintf("%x", sha256.Sum256(encoded))
-	hash_key := "timetable_hash:" + username
-	tt_key := "timetable:" + username
-	prevHash, err := s.store.Get(s.ctx, hash_key)
+
+	hashKey := "timetable_hash:" + username
+	ttKey := "timetable:" + username
+
+	prevHash, err := s.store.Get(s.ctx, hashKey)
 	if err != nil {
-		// Key missing on first run — store and move on.
+		// First run: store snapshot and exit.
 		slog.Info("storing initial timetable snapshot", "username", username)
-		err := s.store.Set(s.ctx, hash_key, newHash, 2*s.pollInterval)
-		if err != nil {
+
+		if err := s.store.Set(s.ctx, hashKey, newHash, 2*s.pollInterval); err != nil {
 			return fmt.Errorf("storing timetable hash: %w", err)
 		}
-		err = s.store.Set(s.ctx, tt_key, string(encoded), 2*s.pollInterval)
-		if err != nil {
+
+		if err := s.store.Set(s.ctx, ttKey, string(encoded), 2*s.pollInterval); err != nil {
 			return fmt.Errorf("storing timetable: %w", err)
 		}
+
 		return nil
 	}
 
@@ -92,37 +105,59 @@ func (s *Service) processUser(username string) error {
 		slog.Debug("timetable unchanged", "username", username)
 		return nil
 	}
-	prevTTString, err := s.store.Get(s.ctx, tt_key)
+
+	prevTTString, err := s.store.Get(s.ctx, ttKey)
 	if err != nil {
 		return fmt.Errorf("getting previous timetable: %w", err)
 	}
+
 	var prevTimetable untis.Timetable
 	if err := json.Unmarshal([]byte(prevTTString), &prevTimetable); err != nil {
 		return fmt.Errorf("parsing previous timetable: %w", err)
 	}
+
 	var newTimetable untis.Timetable
-	if err := json.Unmarshal([]byte(string(encoded)), &newTimetable); err != nil {
+	if err := json.Unmarshal(encoded, &newTimetable); err != nil {
 		return fmt.Errorf("parsing new timetable: %w", err)
 	}
-	d := diff.Compare(prevTimetable, newTimetable)
-	slog.Info("timetable changed, sending notification", "username", username, "changes", d)
-	if err := s.store.Set(s.ctx, hash_key, newHash, 2*s.pollInterval); err != nil {
+
+	timetableDiff := diff.Compare(prevTimetable, newTimetable)
+
+	slog.Info(
+		"timetable changed",
+		"username", username,
+		"changes", timetableDiff,
+	)
+
+	if err := s.store.Set(s.ctx, hashKey, newHash, 2*s.pollInterval); err != nil {
 		return fmt.Errorf("updating timetable hash: %w", err)
 	}
-	if err := s.store.Set(s.ctx, tt_key, string(encoded), 2*s.pollInterval); err != nil {
+
+	if err := s.store.Set(s.ctx, ttKey, string(encoded), 2*s.pollInterval); err != nil {
 		return fmt.Errorf("updating timetable: %w", err)
 	}
-	if err := s.appendChanges(username, diff); err != nil {
+
+	if err := s.appendChanges(username, timetableDiff); err != nil {
 		return fmt.Errorf("appending changes: %w", err)
 	}
-	msg, ok := diff.ToMessage(d)
-	if ok {
-	    if err := s.notifier.SendNotification(s.ctx, username, msg.Title, msg.Body); err != nil {
-	        slog.Error("failed to send push notification", "username", username, "error", err)
-	    }
-	}
-	return nil
 
+	msg, ok := diff.ToMessage(timetableDiff)
+	if ok {
+		if err := s.notifier.SendNotification(
+			s.ctx,
+			username,
+			msg.Title,
+			msg.Body,
+		); err != nil {
+			slog.Error(
+				"failed to send push notification",
+				"username", username,
+				"error", err,
+			)
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) Start() {
