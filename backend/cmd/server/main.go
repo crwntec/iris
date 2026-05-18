@@ -18,22 +18,27 @@ import (
 
 func main() {
 	cfg := config.Load()
-	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.ValkeyURL}})
+
+	client, err := valkey.NewClient(
+		valkey.ClientOption{
+			InitAddress: []string{cfg.ValkeyURL},
+		},
+	)
 	if err != nil {
-		slog.Error("Failed to connect to valkey. Exiting...")
+		slog.Error("failed to connect to valkey", "err", err)
 		os.Exit(1)
 	}
 	defer client.Close()
 
-	if err != nil {
-		slog.Error("failed to create valkey client", "err", err)
-		os.Exit(1)
-	}
 	slog.Info("valkey client created", "url", cfg.ValkeyURL)
-	handler := api.NewRouter(client, cfg)
+
+	st := store.New(client)
+
+	router := api.NewRouter(client, cfg)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.ServerPort,
-		Handler: handler,
+		Handler: router,
 	}
 
 	go func() {
@@ -41,18 +46,33 @@ func main() {
 			if err == http.ErrServerClosed {
 				return
 			}
+
 			slog.Error("failed to start HTTP server", "err", err)
 		}
 	}()
+
 	slog.Info("server started", "port", cfg.ServerPort)
-	pushHandler := handler.NewPushHandler(st, cfg)
-	pollingService := polling.NewService(context.Background(), cfg, store.New(client),pushHandler, time.Minute*5)
-	pollingService.Start()
+
+	pushHandler := api.NewPushHandler(st, cfg)
+
+	pollingService := polling.NewService(
+		context.Background(),
+		cfg,
+		st,
+		pushHandler,
+		5*time.Minute,
+	)
+
+	go pollingService.Start()
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	srv.Shutdown(ctx)
+
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("failed to shutdown server", "err", err)
+	}
 }
