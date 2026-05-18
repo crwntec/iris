@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/crwntec/iris/backend/internal/api"
+	"github.com/crwntec/iris/backend/internal/api/handler"
 	"github.com/crwntec/iris/backend/internal/config"
 	"github.com/crwntec/iris/backend/internal/polling"
 	"github.com/crwntec/iris/backend/internal/store"
@@ -53,7 +54,7 @@ func main() {
 
 	slog.Info("server started", "port", cfg.ServerPort)
 
-	pushHandler := api.NewPushHandler(st, cfg)
+	pushHandler := handler.NewPushHandler(st, cfg)
 
 	pollingService := polling.NewService(
 		context.Background(),
