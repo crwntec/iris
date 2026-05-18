@@ -14,20 +14,24 @@ import (
 	"github.com/crwntec/iris/backend/internal/store"
 	"github.com/crwntec/iris/backend/internal/untis"
 )
-
+type NotificationSender interface {
+    SendNotification(ctx context.Context, username, title, body string) error
+}
 type Service struct {
 	ctx          context.Context
 	store        *store.Store
 	pollInterval time.Duration
 	config       config.Config
+	notifier     NotificationSender
 }
 
-func NewService(ctx context.Context, config config.Config, store *store.Store, pollInterval time.Duration) *Service {
+func NewService(ctx context.Context, config config.Config, store *store.Store, notifier NotificationSender, pollInterval time.Duration) *Service {
 	return &Service{
 		ctx:          ctx,
 		store:        store,
 		pollInterval: pollInterval,
 		config:       config,
+		notifier:     notifier
 	}
 }
 
@@ -72,12 +76,12 @@ func (s *Service) processUser(username string) error {
 	prevHash, err := s.store.Get(s.ctx, hash_key)
 	if err != nil {
 		// Key missing on first run — store and move on.
-		// slog.Info("storing initial timetable snapshot", "username", username)
-		err := s.store.Set(s.ctx, hash_key, newHash, 6*time.Minute)
+		slog.Info("storing initial timetable snapshot", "username", username)
+		err := s.store.Set(s.ctx, hash_key, newHash, 2*s.pollInterval)
 		if err != nil {
 			return fmt.Errorf("storing timetable hash: %w", err)
 		}
-		err = s.store.Set(s.ctx, tt_key, string(encoded), 6*time.Minute)
+		err = s.store.Set(s.ctx, tt_key, string(encoded), 2*s.pollInterval)
 		if err != nil {
 			return fmt.Errorf("storing timetable: %w", err)
 		}
@@ -100,18 +104,23 @@ func (s *Service) processUser(username string) error {
 	if err := json.Unmarshal([]byte(string(encoded)), &newTimetable); err != nil {
 		return fmt.Errorf("parsing new timetable: %w", err)
 	}
-	diff := diff.Compare(prevTimetable, newTimetable)
-	slog.Info("timetable changed, sending notification", "username", username, "changes", diff)
-	if err := s.store.Set(s.ctx, hash_key, newHash, 6*time.Minute); err != nil {
+	d := diff.Compare(prevTimetable, newTimetable)
+	slog.Info("timetable changed, sending notification", "username", username, "changes", d)
+	if err := s.store.Set(s.ctx, hash_key, newHash, 2*s.pollInterval); err != nil {
 		return fmt.Errorf("updating timetable hash: %w", err)
 	}
-	if err := s.store.Set(s.ctx, tt_key, string(encoded), 6*time.Minute); err != nil {
+	if err := s.store.Set(s.ctx, tt_key, string(encoded), 2*s.pollInterval); err != nil {
 		return fmt.Errorf("updating timetable: %w", err)
 	}
 	if err := s.appendChanges(username, diff); err != nil {
 		return fmt.Errorf("appending changes: %w", err)
 	}
-
+	msg, ok := diff.ToMessage(d)
+	if ok {
+	    if err := s.notifier.SendNotification(s.ctx, username, msg.Title, msg.Body); err != nil {
+	        slog.Error("failed to send push notification", "username", username, "error", err)
+	    }
+	}
 	return nil
 
 }
@@ -133,8 +142,8 @@ func (s *Service) Start() {
 }
 
 func (s *Service) poll() {
-	slog.Info("polling timetable for changes")
 	subscribedUsers, err := s.store.Keys(s.ctx, "push:*")
+	slog.Info("polling timetable for changes", "subscribed_users", len(subscribedUsers))
 	if err != nil {
 		slog.Error("failed to get subscribed users", "error", err)
 		return

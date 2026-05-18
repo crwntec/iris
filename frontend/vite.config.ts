@@ -8,17 +8,18 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       strategies: "injectManifest",
       srcDir: "src",
       filename: "sw.ts",
       manifest: {
+        id: "/",
         name: "Iris",
         short_name: "Iris",
         theme_color: "#09090b",
         background_color: "#09090b",
         display: "standalone",
-        start_url: "/",
+        start_url: "/absences",
 
         icons: [
           {

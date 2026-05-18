@@ -45,7 +45,8 @@ func main() {
 		}
 	}()
 	slog.Info("server started", "port", cfg.ServerPort)
-	pollingService := polling.NewService(context.Background(), cfg, store.New(client), time.Minute*5)
+	pushHandler := handler.NewPushHandler(st, cfg)
+	pollingService := polling.NewService(context.Background(), cfg, store.New(client),pushHandler, time.Minute*5)
 	pollingService.Start()
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
