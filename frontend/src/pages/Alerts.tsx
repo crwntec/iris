@@ -221,27 +221,35 @@ export default function Alerts() {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  {entry.changes.map((lessonChange, cIdx) => (
-                    <div key={cIdx} className="text-sm text-zinc-300">
-                      <span className="font-medium text-white">
-                        {lessonChange.subject}
-                      </span>
-                      <span className="text-zinc-500 mx-1.5">•</span>
-                      <span className="text-zinc-400">
-                        {moment(lessonChange.start).format("DD.MM")} (
-                        {moment(lessonChange.start).format("HH:mm")} –{" "}
-                        {moment(lessonChange.end).format("HH:mm")})
-                      </span>
-                      {lessonChange.changes.map((change) => (
-                        <div className="flex items-center gap-2 text-zinc-400">
-                          {getChangeLabel(change).icon}
-                          <span className={getChangeLabel(change).color}>
-                            {getChangeLabel(change).text}
-                          </span>
-                        </div>
-                      ))}
+                  {entry.changes && entry.changes.length > 0 ? (
+                    entry.changes.map((lessonChange, cIdx) => (
+                      <div key={cIdx} className="text-sm text-zinc-300">
+                        <span className="font-medium text-white">
+                          {lessonChange.subject}
+                        </span>
+                        <span className="text-zinc-500 mx-1.5">•</span>
+                        <span className="text-zinc-400">
+                          {moment(lessonChange.start).format("DD.MM")} (
+                          {moment(lessonChange.start).format("HH:mm")} –{" "}
+                          {moment(lessonChange.end).format("HH:mm")})
+                        </span>
+                        {lessonChange.changes.map((change) => (
+                          <div className="flex items-center gap-2 text-zinc-400">
+                            {getChangeLabel(change).icon}
+                            <span className={getChangeLabel(change).color}>
+                              {getChangeLabel(change).text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    <div>
+                      <p className="text-zinc-500 text-sm">
+                        Keine Änderungen vorhanden
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             ))}
