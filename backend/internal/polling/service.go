@@ -14,8 +14,9 @@ import (
 	"github.com/crwntec/iris/backend/internal/store"
 	"github.com/crwntec/iris/backend/internal/untis"
 )
+
 type NotificationSender interface {
-    SendNotification(ctx context.Context, username, title, body string) error
+	SendNotification(ctx context.Context, username, title, body string) error
 }
 type Service struct {
 	ctx          context.Context
@@ -122,6 +123,24 @@ func (s *Service) processUser(username string) error {
 	}
 
 	timetableDiff := diff.Compare(prevTimetable, newTimetable)
+
+	if len(timetableDiff.Changes) == 0 {
+		slog.Debug(
+			"timetable changed but no relevant lesson changes detected",
+			"username", username,
+		)
+
+		// still update snapshot/hash
+		if err := s.store.Set(s.ctx, hashKey, newHash, 2*s.pollInterval); err != nil {
+			return fmt.Errorf("updating timetable hash: %w", err)
+		}
+
+		if err := s.store.Set(s.ctx, ttKey, string(encoded), 2*s.pollInterval); err != nil {
+			return fmt.Errorf("updating timetable: %w", err)
+		}
+
+		return nil
+	}
 
 	slog.Info(
 		"timetable changed",
