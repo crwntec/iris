@@ -90,11 +90,11 @@ func (s *Service) processUser(username string) error {
 		// First run: store snapshot and exit.
 		slog.Info("storing initial timetable snapshot", "username", username)
 
-		if err := s.store.Set(s.ctx, hashKey, newHash, 2*s.pollInterval); err != nil {
+		if err := s.store.Set(s.ctx, hashKey, newHash, 0); err != nil {
 			return fmt.Errorf("storing timetable hash: %w", err)
 		}
 
-		if err := s.store.Set(s.ctx, ttKey, string(encoded), 2*s.pollInterval); err != nil {
+		if err := s.store.Set(s.ctx, ttKey, string(encoded), 0); err != nil {
 			return fmt.Errorf("storing timetable: %w", err)
 		}
 
