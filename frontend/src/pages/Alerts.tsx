@@ -201,58 +201,75 @@ export default function Alerts() {
           </div>
         ) : data && data.length > 0 ? (
           <div className="space-y-3">
-            {data.map((entry, idx) => (
-              <div
-                key={idx}
-                className="relative rounded-3xl border border-zinc-800 bg-zinc-900/60 p-5 hover:bg-zinc-900/80 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                    {new Date(entry.detectedAt).toLocaleDateString("de-DE", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                  <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-full">
-                    {entry.changes.length} Änderung
-                    {entry.changes.length !== 1 ? "en" : ""}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {entry.changes && entry.changes.length > 0 ? (
-                    entry.changes.map((lessonChange, cIdx) => (
-                      <div key={cIdx} className="text-sm text-zinc-300">
-                        <span className="font-medium text-white">
-                          {lessonChange.subject}
-                        </span>
-                        <span className="text-zinc-500 mx-1.5">•</span>
-                        <span className="text-zinc-400">
-                          {moment(lessonChange.start).format("DD.MM")} (
-                          {moment(lessonChange.start).format("HH:mm")} –{" "}
-                          {moment(lessonChange.end).format("HH:mm")})
-                        </span>
-                        {lessonChange.changes.map((change) => (
-                          <div className="flex items-center gap-2 text-zinc-400">
-                            {getChangeLabel(change).icon}
-                            <span className={getChangeLabel(change).color}>
-                              {getChangeLabel(change).text}
-                            </span>
-                          </div>
-                        ))}
+            {data
+              .sort(
+                (a, b) =>
+                  new Date(b.detectedAt).getTime() -
+                  new Date(a.detectedAt).getTime(),
+              )
+              .map((entry, idx) => (
+                <div
+                  key={idx}
+                  className="relative rounded-3xl border border-zinc-800 bg-zinc-900/60 p-5 hover:bg-zinc-900/80 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                      {new Date(entry.detectedAt).toLocaleDateString("de-DE", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-full">
+                      {entry.changes.length} Änderung
+                      {entry.changes.length !== 1 ? "en" : ""}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {entry.changes && entry.changes.length > 0 ? (
+                      entry.changes.map((lessonChange, cIdx) => (
+                        <div key={cIdx} className="text-sm text-zinc-300">
+                          <span className="font-medium text-white">
+                            {lessonChange.subject}
+                          </span>
+                          <span className="text-zinc-500 mx-1.5">•</span>
+                          <span className="text-zinc-400">
+                            {moment(lessonChange.start).format("dd")}{" "}
+                            {moment(lessonChange.start).format("DD.MM")} (
+                            {moment(lessonChange.start).format("HH:mm")} –{" "}
+                            {moment(lessonChange.end).format("HH:mm")})
+                          </span>
+                          {lessonChange.changes &&
+                            lessonChange.changes.length > 0 && (
+                              <div className="flex items-center gap-2 text-zinc-400">
+                                {lessonChange.changes.map((change, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-2 text-zinc-400"
+                                  >
+                                    {getChangeLabel(change).icon}
+                                    <span
+                                      className={getChangeLabel(change).color}
+                                    >
+                                      {getChangeLabel(change).text}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      ))
+                    ) : (
+                      <div>
+                        <p className="text-zinc-500 text-sm">
+                          Keine Änderungen vorhanden
+                        </p>
                       </div>
-                    ))
-                  ) : (
-                    <div>
-                      <p className="text-zinc-500 text-sm">
-                        Keine Änderungen vorhanden
-                      </p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         ) : (
           <div className="text-center py-12 rounded-3xl border border-zinc-800 bg-zinc-900/30">

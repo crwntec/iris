@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   DoorOpen,
   Clock,
+  NotepadText,
 } from "lucide-react";
 
 const FAKE_TEACHERS = new Set(["E.V.A", "TEAMS", ""]);
@@ -66,7 +67,12 @@ export function getChangeLabel(change: LessonChange): {
         icon: <Clock size={14} />,
         color: "text-blue-400",
       };
-
+    case "notes":
+      return {
+        text: `Notizen: → ${change.after}`,
+        icon: <NotepadText size={14} />,
+        color: "text-blue-400",
+      };
     default:
       return {
         text: `${change.field}: ${change.before} → ${change.after}`,

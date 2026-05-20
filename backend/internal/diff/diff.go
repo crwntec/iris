@@ -12,16 +12,16 @@ type TimetableDiff struct {
 }
 
 type LessonDiff struct {
-	Start   time.Time
-	End     time.Time
-	Subject string
-	Changes []LessonChange
+	Start   time.Time      `json:"start"`
+	End     time.Time      `json:"end"`
+	Subject string         `json:"subject"`
+	Changes []LessonChange `json:"changes"`
 }
 
 type LessonChange struct {
-	Field  LessonField
-	Before string
-	After  string
+	Field  LessonField `json:"field"`
+	Before string      `json:"before"`
+	After  string      `json:"after"`
 }
 
 type LessonField string
