@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getChangeLabel } from "@/util/alerts";
 import { formatWeekDay } from "@/util";
 import moment from "moment";
-import "moment/dist/locale/de";
+import "moment/locale/de";
 
 moment.locale("de");
 console.log(moment.locale());
