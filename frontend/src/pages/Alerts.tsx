@@ -5,9 +5,13 @@ import { api } from "@/api/client";
 import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
 import { useQuery } from "@tanstack/react-query";
 import { getChangeLabel } from "@/util/alerts";
-import moment from "moment-timezone";
 import { formatWeekDay } from "@/util";
+import moment from "moment";
+import "moment/dist/locale/de";
 
+moment.locale("de");
+console.log(moment.locale());
+console.log(moment().format("dd"));
 export default function Alerts() {
   const { data, isLoading, error, isFetching, refetch, dataUpdatedAt } =
     useQuery({
@@ -204,8 +208,7 @@ export default function Alerts() {
             {data
               .sort(
                 (a, b) =>
-                  new Date(b.detectedAt).getTime() -
-                  new Date(a.detectedAt).getTime(),
+                  moment(b.detectedAt).unix() - moment(a.detectedAt).unix(),
               )
               .map((entry, idx) => (
                 <div
@@ -214,12 +217,7 @@ export default function Alerts() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                      {new Date(entry.detectedAt).toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {moment(entry.detectedAt).format("DD. MMM, HH:mm")}
                     </span>
                     <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded-full">
                       {entry.changes.length} Änderung

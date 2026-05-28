@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { ClipboardList, BarChart2, BellIcon } from "lucide-react";
+import { ClipboardList, BarChart2, BellIcon, InfoIcon } from "lucide-react";
 
 const links = [
   { to: "/absences", label: "Fehlstunden", Icon: ClipboardList },
   { to: "/stats", label: "Statistik", Icon: BarChart2 },
   { to: "/alerts", label: "Nachrichten", Icon: BellIcon },
+  { to: "/about", label: "App", Icon: InfoIcon },
 ];
 
 export default function BottomNav() {

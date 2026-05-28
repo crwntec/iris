@@ -1,16 +1,21 @@
 import type { ChangeEvent } from "@/types/app";
 import {
-  UserX,
   ArrowRightLeft,
   DoorOpen,
   Clock,
   NotepadText,
+  AlertTriangle,
+  PartyPopper,
 } from "lucide-react";
 
 const CHANGE_META = {
   cancelled: {
-    icon: <UserX />,
-    color: "text-rose-400",
+    icon: <PartyPopper />,
+    color: "text-emerald-400",
+  },
+  restored: {
+    icon: <AlertTriangle />,
+    color: "text-amber-400",
   },
 
   substitution: {
@@ -34,6 +39,10 @@ const CHANGE_META = {
     icon: <ArrowRightLeft />,
     color: "text-zinc-400",
   },
+  "partial-change": {
+    icon: <ArrowRightLeft />,
+    color: "text-amber-400",
+  },
 };
 export function getChangeLabel(change: ChangeEvent) {
   const meta = CHANGE_META[change.kind];
@@ -41,6 +50,8 @@ export function getChangeLabel(change: ChangeEvent) {
   return {
     text: change.label,
     icon: meta?.icon ?? <ArrowRightLeft />,
-    color: meta?.color ?? "text-zinc-400",
+    color:
+      (meta?.color ?? "text-zinc-400") +
+      (change.severity == "info-italic" ? " italic" : ""),
   };
 }

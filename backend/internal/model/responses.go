@@ -8,6 +8,7 @@ type ChangeSeverity string
 const (
 	ChangeKindCancelled    ChangeKind = "cancelled"
 	ChangeKindSubstitution ChangeKind = "substitution"
+	ChangeKindRestored     ChangeKind = "restored"
 	ChangeKindRoom         ChangeKind = "room-change"
 	ChangeKindTime         ChangeKind = "time-change"
 	ChangeKindNotes        ChangeKind = "notes"
@@ -15,9 +16,11 @@ const (
 )
 
 const (
-	ChangeSeverityDanger  ChangeSeverity = "danger"
-	ChangeSeverityWarning ChangeSeverity = "warning"
-	ChangeSeverityInfo    ChangeSeverity = "info"
+	ChangeSeverityDanger     ChangeSeverity = "danger"
+	ChangeSeveritySuccess    ChangeSeverity = "success"
+	ChangeSeverityWarning    ChangeSeverity = "warning"
+	ChangeSeverityInfo       ChangeSeverity = "info"
+	ChangeSeverityInfoItalic ChangeSeverity = "info-italic"
 )
 
 type ChangeField string

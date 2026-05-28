@@ -45,7 +45,7 @@ export type ChangeField =
   | "endTime"
   | "unknown";
 
-export type ChangeSeverity = "danger" | "warning" | "info";
+export type ChangeSeverity = "danger" | "warning" | "info" | "info-italic";
 export type ChangeKind =
   | "cancelled"
   | "substitution"

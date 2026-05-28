@@ -1,6 +1,7 @@
 package diff
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -75,6 +76,13 @@ func interpretChange(c LessonChange) SemanticChange {
 			return SemanticChange{
 				Label:    "Fällt aus",
 				Kind:     model.ChangeKindCancelled,
+				Severity: model.ChangeSeveritySuccess,
+			}
+		}
+		if c.Before == "CANCELLED" || isFakeCancellation(c.Before) {
+			return SemanticChange{
+				Label:    "Findet statt",
+				Kind:     model.ChangeKindRestored,
 				Severity: model.ChangeSeverityDanger,
 			}
 		}
@@ -94,6 +102,29 @@ func interpretChange(c LessonChange) SemanticChange {
 		}
 		return SemanticChange{
 			Label:    "Vertretung: " + c.After,
+			Kind:     model.ChangeKindSubstitution,
+			Severity: model.ChangeSeverityWarning,
+		}
+
+	case FieldPartialChange:
+		var newSegs []SegmentSummary
+		_ = json.Unmarshal([]byte(c.After), &newSegs)
+
+		var parts []string
+		for _, s := range newSegs {
+			start, _ := parseUntisTime(s.Start)
+			end, _ := parseUntisTime(s.End)
+			slot := fmt.Sprintf("%s–%s", start.Format("15:04"), end.Format("15:04"))
+
+			if isFakeCancellation(s.Teacher) || s.Status == "CANCELLED" {
+				parts = append(parts, slot+": fällt aus")
+			} else if s.Teacher != "" {
+				parts = append(parts, slot+": "+s.Teacher)
+			}
+		}
+
+		return SemanticChange{
+			Label:    "Teilweise: " + strings.Join(parts, ", "),
 			Kind:     model.ChangeKindSubstitution,
 			Severity: model.ChangeSeverityWarning,
 		}
@@ -123,6 +154,13 @@ func interpretChange(c LessonChange) SemanticChange {
 		}
 
 	case FieldNotes:
+		if c.After == "" {
+			return SemanticChange{
+				Label:    "Notizen gelöscht",
+				Kind:     model.ChangeKindNotes,
+				Severity: model.ChangeSeverityInfoItalic,
+			}
+		}
 		return SemanticChange{
 			Label:    c.After,
 			Kind:     model.ChangeKindNotes,
@@ -175,7 +213,7 @@ func ToMessage(d TimetableDiff) (PushMessage, bool) {
 	}, true
 }
 
-func ToAPIChangeLog(d TimetableDiff) model.ChangeLogEntry {
+func ToAPIChangeLog(d TimetableDiff, detectedAt time.Time) model.ChangeLogEntry {
 	groups := make([]model.ChangeGroup, 0, len(d.Changes))
 
 	for _, lesson := range d.Changes {
@@ -205,7 +243,7 @@ func ToAPIChangeLog(d TimetableDiff) model.ChangeLogEntry {
 	}
 
 	return model.ChangeLogEntry{
-		DetectedAt: time.Now().UTC(),
+		DetectedAt: detectedAt,
 		Changes:    groups,
 	}
 }

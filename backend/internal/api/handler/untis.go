@@ -13,6 +13,7 @@ import (
 	"github.com/crwntec/iris/backend/internal/config"
 	"github.com/crwntec/iris/backend/internal/diff"
 	"github.com/crwntec/iris/backend/internal/model"
+	"github.com/crwntec/iris/backend/internal/polling"
 	"github.com/crwntec/iris/backend/internal/store"
 	"github.com/crwntec/iris/backend/internal/untis"
 	"github.com/golang-jwt/jwt/v5"
@@ -206,14 +207,13 @@ func (h *UntisHandler) GetChanges(w http.ResponseWriter, r *http.Request) {
 	changelog := make([]model.ChangeLogEntry, 0, len(raw))
 
 	for _, item := range raw {
-		var d diff.TimetableDiff
 
-		if err := json.Unmarshal([]byte(item), &d); err != nil {
+		var entry polling.ChangeLogEntry
+		if err := json.Unmarshal([]byte(item), &entry); err != nil {
 			slog.Info("invalid change entry skipped", "error", err)
 			continue
 		}
-
-		apiEntry := diff.ToAPIChangeLog(d)
+		apiEntry := diff.ToAPIChangeLog(diff.TimetableDiff{Changes: entry.Changes}, entry.DetectedAt)
 		changelog = append(changelog, apiEntry)
 	}
 

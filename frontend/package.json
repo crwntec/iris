@@ -1,7 +1,8 @@
 {
   "name": "iris-frontend",
   "private": true,
-  "version": "0.2.1",
+  "author": "crwntec",
+  "version": "0.2.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
