@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import { registerSW } from "virtual:pwa-register";
-import moment from "moment";
 
 const queryClient = new QueryClient();
 
@@ -57,7 +56,6 @@ if (isTouchDevice) {
     { passive: false },
   );
 }
-moment.locale("de");
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <RouterProvider router={router} />

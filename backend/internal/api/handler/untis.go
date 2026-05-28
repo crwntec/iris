@@ -5,11 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/crwntec/iris/backend/internal"
 	"github.com/crwntec/iris/backend/internal/config"
+	"github.com/crwntec/iris/backend/internal/diff"
+	"github.com/crwntec/iris/backend/internal/model"
 	"github.com/crwntec/iris/backend/internal/store"
 	"github.com/crwntec/iris/backend/internal/untis"
 	"github.com/golang-jwt/jwt/v5"
@@ -195,17 +198,25 @@ func (h *UntisHandler) GetChanges(w http.ResponseWriter, r *http.Request) {
 
 	raw, err := h.store.GetChanges(r.Context(), "changes:"+username)
 	if err != nil {
-		http.Error(w, "internal error: "+err.Error(), http.StatusInternalServerError)
+		slog.Info("get changes failed", "error", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	// Decode each stored JSON string into a real value so the response
-	// is a proper JSON array, not an array of escaped strings.
-	entries := make([]json.RawMessage, len(raw))
-	for i, s := range raw {
-		entries[i] = json.RawMessage(s)
+	changelog := make([]model.ChangeLogEntry, 0, len(raw))
+
+	for _, item := range raw {
+		var d diff.TimetableDiff
+
+		if err := json.Unmarshal([]byte(item), &d); err != nil {
+			slog.Info("invalid change entry skipped", "error", err)
+			continue
+		}
+
+		apiEntry := diff.ToAPIChangeLog(d)
+		changelog = append(changelog, apiEntry)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(entries)
+	_ = json.NewEncoder(w).Encode(changelog)
 }

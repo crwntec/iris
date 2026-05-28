@@ -23,6 +23,27 @@ export function formatDateRange(start: string, end: string): string {
 
 export const PRESETS = ["7T", "30T", "Monat", "Semester"];
 
+export function formatWeekDay(day: string): string {
+  switch (day) {
+    case "Mo":
+      return "Mo";
+    case "Tu":
+      return "Di";
+    case "We":
+      return "Mi";
+    case "Th":
+      return "Do";
+    case "Fr":
+      return "Fr";
+    case "Sa":
+      return "Sa";
+    case "Su":
+      return "So";
+    default:
+      return day;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
 // Date Helpers
 // ─────────────────────────────────────────────────────────────

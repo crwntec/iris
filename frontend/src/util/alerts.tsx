@@ -1,83 +1,46 @@
-import type { LessonChange } from "@/types/app";
+import type { ChangeEvent } from "@/types/app";
 import {
   UserX,
   ArrowRightLeft,
-  AlertTriangle,
   DoorOpen,
   Clock,
   NotepadText,
 } from "lucide-react";
 
-const FAKE_TEACHERS = new Set(["E.V.A", "TEAMS", ""]);
+const CHANGE_META = {
+  cancelled: {
+    icon: <UserX />,
+    color: "text-rose-400",
+  },
 
-function isFakeCancellation(teacher: string): boolean {
-  return FAKE_TEACHERS.has(teacher.trim());
-}
+  substitution: {
+    icon: <ArrowRightLeft />,
+    color: "text-amber-400",
+  },
 
-export function getChangeLabel(change: LessonChange): {
-  text: string;
-  icon: React.ReactNode;
-  color: string;
-} {
-  switch (change.field) {
-    case "status":
-      if (change.after === "CANCELLED") {
-        return {
-          text: "Fällt aus",
-          icon: <UserX size={14} />,
-          color: "text-rose-400",
-        };
-      }
-      return {
-        text: "Geändert",
-        icon: <ArrowRightLeft size={14} />,
-        color: "text-amber-400",
-      };
+  "room-change": {
+    icon: <DoorOpen />,
+    color: "text-blue-400",
+  },
+  "time-change": {
+    icon: <Clock />,
+    color: "text-blue-400",
+  },
+  notes: {
+    icon: <NotepadText />,
+    color: "text-blue-400",
+  },
+  generic: {
+    icon: <ArrowRightLeft />,
+    color: "text-zinc-400",
+  },
+};
+export function getChangeLabel(change: ChangeEvent) {
+  const meta = CHANGE_META[change.kind];
 
-    case "teacher":
-      if (isFakeCancellation(change.after)) {
-        return {
-          text: `Fällt aus (als ${change.after} deklariert)`,
-          icon: <AlertTriangle size={14} />,
-          color: "text-rose-400",
-        };
-      }
-      return {
-        text: `Vertretung: ${change.after}`,
-        icon: <UserX size={14} />,
-        color: "text-amber-400",
-      };
-
-    case "room":
-      return {
-        text: `Raum: ${change.before} → ${change.after}`,
-        icon: <DoorOpen size={14} />,
-        color: "text-blue-400",
-      };
-
-    case "startTime":
-      return {
-        text: `Startzeit: ${change.before} → ${change.after}`,
-        icon: <Clock size={14} />,
-        color: "text-blue-400",
-      };
-    case "endTime":
-      return {
-        text: `Endzeit: ${change.before} → ${change.after}`,
-        icon: <Clock size={14} />,
-        color: "text-blue-400",
-      };
-    case "notes":
-      return {
-        text: `Notizen: → ${change.after}`,
-        icon: <NotepadText size={14} />,
-        color: "text-blue-400",
-      };
-    default:
-      return {
-        text: `${change.field}: ${change.before} → ${change.after}`,
-        icon: <ArrowRightLeft size={14} />,
-        color: "text-zinc-400",
-      };
-  }
+  return {
+    text: change.label,
+    icon: meta?.icon ?? <ArrowRightLeft />,
+    color: meta?.color ?? "text-zinc-400",
+  };
 }

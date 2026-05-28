@@ -6,6 +6,7 @@ import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
 import { useQuery } from "@tanstack/react-query";
 import { getChangeLabel } from "@/util/alerts";
 import moment from "moment-timezone";
+import { formatWeekDay } from "@/util";
 
 export default function Alerts() {
   const { data, isLoading, error, isFetching, refetch, dataUpdatedAt } =
@@ -83,7 +84,6 @@ export default function Alerts() {
 
   // eslint-disable-next-line react-hooks/purity
   const isStale = Date.now() - dataUpdatedAt > 1000 * 60 * 10;
-
   return (
     <div className="min-h-screen bg-zinc-950 text-white pb-24">
       {/* Header Section */}
@@ -162,7 +162,7 @@ export default function Alerts() {
                 {isDenied && (
                   <p className="text-xs text-zinc-500 text-center leading-relaxed px-2">
                     Benachrichtigungen wurden blockiert. Bitte erlaube sie in
-                    den iOS-Einstellungen.
+                    den Einstellungen.
                   </p>
                 )}
               </>
@@ -235,29 +235,28 @@ export default function Alerts() {
                           </span>
                           <span className="text-zinc-500 mx-1.5">•</span>
                           <span className="text-zinc-400">
-                            {moment(lessonChange.start).format("dd")}{" "}
+                            {formatWeekDay(
+                              moment(lessonChange.start).format("dd"),
+                            )}{" "}
                             {moment(lessonChange.start).format("DD.MM")} (
                             {moment(lessonChange.start).format("HH:mm")} –{" "}
                             {moment(lessonChange.end).format("HH:mm")})
                           </span>
-                          {lessonChange.changes &&
-                            lessonChange.changes.length > 0 && (
-                              <div className="flex items-center gap-2 text-zinc-400">
-                                {lessonChange.changes.map((change, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-2 text-zinc-400"
-                                  >
-                                    {getChangeLabel(change).icon}
-                                    <span
-                                      className={getChangeLabel(change).color}
-                                    >
-                                      {getChangeLabel(change).text}
-                                    </span>
-                                  </div>
-                                ))}
+                          {lessonChange.events.map((event, idx) => {
+                            const label = getChangeLabel(event);
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2 text-zinc-400"
+                              >
+                                {label.icon}
+                                <span className={label.color}>
+                                  {label.text}
+                                </span>
                               </div>
-                            )}
+                            );
+                          })}
                         </div>
                       ))
                     ) : (

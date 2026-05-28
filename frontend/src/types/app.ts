@@ -35,19 +35,24 @@ export interface DateRange {
   end: Date;
 }
 
-export type LessonDiff = {
-  start: string; // ISO datetime string
-  end: string; // ISO datetime string
-  subject: string;
-  changes: LessonChange[];
-};
+export type ChangeField =
+  | "status"
+  | "teacher"
+  | "subject"
+  | "room"
+  | "notes"
+  | "startTime"
+  | "endTime"
+  | "unknown";
 
-export type LessonChange = {
-  field: LessonField;
-  before: string;
-  after: string;
-};
-
+export type ChangeSeverity = "danger" | "warning" | "info";
+export type ChangeKind =
+  | "cancelled"
+  | "substitution"
+  | "room-change"
+  | "time-change"
+  | "notes"
+  | "generic";
 export type LessonField =
   | "status"
   | "teacher"
@@ -56,8 +61,24 @@ export type LessonField =
   | "notes"
   | "startTime"
   | "endTime"
-  | "type";
+  | "unknown";
 export interface ChangeLogEntry {
-  detectedAt: Date;
-  changes: LessonDiff[];
+  detectedAt: string;
+  changes: ChangeGroup[];
+}
+
+export interface ChangeGroup {
+  start: string;
+  end: string;
+  subject: string;
+  events: ChangeEvent[];
+}
+
+export interface ChangeEvent {
+  field: ChangeField;
+  before: string;
+  after: string;
+  kind: ChangeKind;
+  severity: ChangeSeverity;
+  label: string;
 }
