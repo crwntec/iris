@@ -1,2 +1,2 @@
 // src/types/moment-locale.d.ts
-declare module "moment/locale/*";
+declare module "moment/dist/locale/*";

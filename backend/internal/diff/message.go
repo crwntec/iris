@@ -100,6 +100,20 @@ func interpretChange(c LessonChange) SemanticChange {
 				Severity: model.ChangeSeverityDanger,
 			}
 		}
+		if c.After == "" {
+			return SemanticChange{
+				Label:    "Fällt aus (kein Lehrer hinterlegt)",
+				Kind:     model.ChangeKindCancelled,
+				Severity: model.ChangeSeverityDanger,
+			}
+		}
+		if c.Before == "" {
+			return SemanticChange{
+				Label:    "Vertretung hinzugefügt: " + c.After,
+				Kind:     model.ChangeKindSubstitution,
+				Severity: model.ChangeSeverityWarning,
+			}
+		}
 		return SemanticChange{
 			Label:    "Vertretung: " + c.After,
 			Kind:     model.ChangeKindSubstitution,

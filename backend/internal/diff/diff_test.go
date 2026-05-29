@@ -37,58 +37,101 @@ func mustTime(s string) time.Time {
 	panic("invalid time format: " + s)
 }
 
+func TestTeacherRemoval(t *testing.T) {
+	old := untis.Timetable{
+		Days: []untis.TimetableDay{
+			{
+				Date: mustTime("2026-06-03"),
+				Lessons: []untis.Lesson{
+					lesson(
+						mustTime("2026-06-03T07:40"),
+						mustTime("2026-06-03T09:10"),
+						"E-GK3",
+						"HO",
+						"REGULAR",
+						1,
+					),
+				},
+			},
+		},
+	}
+	new := untis.Timetable{
+		Days: []untis.TimetableDay{
+			{
+				Date: mustTime("2026-06-03"),
+				Lessons: []untis.Lesson{
+					lesson(
+						mustTime("2026-06-03T07:40"),
+						mustTime("2026-06-03T08:25"),
+						"E-GK3",
+						"",
+						"CHANGED",
+						1,
+					),
+				},
+			},
+		},
+	}
+	diff := Compare(old, new)
+	if len(diff.Changes) == 0 {
+		t.Fatal("expected changes, got none")
+	}
+	t.Logf("%+v", diff)
+
+}
+
 func TestPartialCancellation(t *testing.T) {
-	// 	old := untis.Timetable{
-	// 		Days: []untis.TimetableDay{
-	// 			{
-	// 				Date: mustTime("2026-06-03"),
-	// 				Lessons: []untis.Lesson{
-	// 					lesson(
-	// 						mustTime("2026-06-03T07:40"),
-	// 						mustTime("2026-06-03T09:10"),
-	// 						"E-GK3",
-	// 						"HO",
-	// 						"REGULAR",
-	// 						1,
-	// 					),
-	// 				},
-	// 			},
-	// 		},
-	// 	}
+	old := untis.Timetable{
+		Days: []untis.TimetableDay{
+			{
+				Date: mustTime("2026-06-03"),
+				Lessons: []untis.Lesson{
+					lesson(
+						mustTime("2026-06-03T07:40"),
+						mustTime("2026-06-03T09:10"),
+						"E-GK3",
+						"HO",
+						"REGULAR",
+						1,
+					),
+				},
+			},
+		},
+	}
 
-	// 	new := untis.Timetable{
-	// 		Days: []untis.TimetableDay{
-	// 			{
-	// 				Date: mustTime("2026-06-03"),
-	// 				Lessons: []untis.Lesson{
-	// 					lesson(
-	// 						mustTime("2026-06-03T07:40"),
-	// 						mustTime("2026-06-03T08:25"),
-	// 						"E-GK3",
-	// 						"HO",
-	// 						"CANCELLED",
-	// 						1,
-	// 					),
-	// 					lesson(
-	// 						mustTime("2026-06-03T08:25"),
-	// 						mustTime("2026-06-03T09:10"),
-	// 						"E-GK3",
-	// 						"HO",
-	// 						"REGULAR",
-	// 						1,
-	// 					),
-	// 				},
-	// 			},
-	// 		},
-	// 	}
+	new := untis.Timetable{
+		Days: []untis.TimetableDay{
+			{
+				Date: mustTime("2026-06-03"),
+				Lessons: []untis.Lesson{
+					lesson(
+						mustTime("2026-06-03T07:40"),
+						mustTime("2026-06-03T08:25"),
+						"E-GK3",
+						"HO",
+						"CANCELLED",
+						1,
+					),
+					lesson(
+						mustTime("2026-06-03T08:25"),
+						mustTime("2026-06-03T09:10"),
+						"E-GK3",
+						"HO",
+						"REGULAR",
+						1,
+					),
+				},
+			},
+		},
+	}
 
-	// 	diff := Compare(old, new)
+	diff := Compare(old, new)
 
-	// 	if len(diff.Changes) == 0 {
-	// 		t.Fatal("expected changes, got none")
-	// 	}
+	if len(diff.Changes) == 0 {
+		t.Fatal("expected changes, got none")
+	}
 
-	//		t.Logf("%+v", diff)
+	t.Logf("%+v", diff)
 }
 func TestPartialFakeCancellation(t *testing.T) {
 	old := untis.Timetable{

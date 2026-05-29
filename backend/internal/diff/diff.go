@@ -255,6 +255,13 @@ func diffNormalized(old, new NormalizedLesson) []LessonChange {
 				After:  sn.End.Format(time.RFC3339),
 			})
 		}
+		if so.Teacher != sn.Teacher {
+			out = append(out, LessonChange{
+				Field:  FieldTeacher,
+				Before: so.Teacher,
+				After:  sn.Teacher,
+			})
+		}
 	}
 	// Handle partial changes
 	if len(old.Segments) == 1 && len(new.Segments) > 1 {
