@@ -39,7 +39,6 @@ func formatGermanDay(t time.Time) string {
 var fakeTeachers = map[string]bool{
 	"E.V.A.": true,
 	"TEAMS":  true,
-	"":       true,
 }
 
 func isFakeCancellation(teacher string) bool {
