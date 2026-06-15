@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { useMemo, useState } from "react";
 import type { TeacherStats } from "@/types/app";
-import { cn, formatDateRange, getDateRangeForPreset } from "@/util";
+import { formatDateRange, getDateRangeForPreset } from "@/util";
 import { RefreshCw } from "lucide-react";
 import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
-import { computeStats, getBarColor } from "@/util/stats";
+import { computeStats } from "@/util/stats";
 import { Section, StatCard } from "@/components/Stats";
 import PresetButtons from "@/components/PresetButtons";
 
@@ -38,15 +38,13 @@ export default function TimetableStats() {
     return computeStats(data);
   }, [data]);
 
-  const { subjectMax, teacherMax, topHomeworkTeachers } = useMemo(() => {
+  const { teacherMax, topHomeworkTeachers } = useMemo(() => {
     if (!stats)
       return {
-        subjectMax: 1,
         teacherMax: 1,
         topHomeworkTeachers: [] as TeacherStats[],
       };
     return {
-      subjectMax: maxBar(stats.bySubject.map((s) => s.total)),
       teacherMax: maxBar(stats.byTeacher.map((t) => t.total)),
       topHomeworkTeachers: stats.byTeacher
         .filter((t) => t.homework > 0)
@@ -185,39 +183,53 @@ export default function TimetableStats() {
       ) : stats ? (
         <Section title="Fächer">
           <div className="space-y-4">
-            {stats.bySubject.map((s) => (
-              <div key={s.subject}>
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-sm font-medium text-zinc-200">
-                    {s.subject}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs">
-                    {s.cancelled > 0 && (
-                      <span className="text-rose-400 font-medium">
-                        {s.cancelled}✗
+            {stats.bySubject
+              .sort((a, b) => b.cancelRate - a.cancelRate)
+              .map((s) => (
+                <div key={s.subject}>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-sm font-medium text-zinc-200">
+                      {s.subject}
+                    </span>
+                    <div className="flex items-center gap-2 text-xs">
+                      {s.cancelled > 0 && (
+                        <span className="text-rose-400 font-medium">
+                          {s.cancelled}✗
+                        </span>
+                      )}
+                      {s.substitute > 0 && (
+                        <span className="text-amber-400 font-medium">
+                          {s.substitute}↔
+                        </span>
+                      )}
+                      <span className="text-zinc-500 tabular-nums">
+                        {s.total}×
                       </span>
+                    </div>
+                  </div>
+                  <div
+                    className="h-1.5 bg-zinc-800 rounded-full overflow-hidden flex"
+                    role="img"
+                    aria-label={`${s.cancelled} ausgefallen, ${s.substitute} Vertretung, ${
+                      s.total - s.cancelled - s.substitute
+                    } regulär von ${s.total}`}
+                  >
+                    {s.cancelled > 0 && (
+                      <div
+                        className="h-full bg-rose-500"
+                        style={{ width: `${(s.cancelled / s.total) * 100}%` }}
+                      />
                     )}
                     {s.substitute > 0 && (
-                      <span className="text-amber-400 font-medium">
-                        {s.substitute}↔
-                      </span>
+                      <div
+                        className="h-full bg-amber-500"
+                        style={{ width: `${(s.substitute / s.total) * 100}%` }}
+                      />
                     )}
-                    <span className="text-zinc-500 tabular-nums">
-                      {s.total}×
-                    </span>
+                    <div className="h-full bg-zinc-600 flex-1" />
                   </div>
                 </div>
-                <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all",
-                      getBarColor(s.cancelled, s.substitute),
-                    )}
-                    style={{ width: `${(s.total / subjectMax) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </Section>
       ) : null}

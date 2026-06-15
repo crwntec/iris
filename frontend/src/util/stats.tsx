@@ -120,8 +120,3 @@ export function computeStats(timetable: Timetable): Stats {
     byTeacher: [...teacherMap.values()].sort((a, b) => b.total - a.total),
   };
 }
-export function getBarColor(cancelled: number, substitute: number): string {
-  if (cancelled > 0) return "bg-rose-500";
-  if (substitute > 0) return "bg-amber-500";
-  return "bg-zinc-500";
-}
