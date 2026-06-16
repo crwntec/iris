@@ -3,6 +3,7 @@ package diff
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -55,12 +56,15 @@ type Segment struct {
 	End     time.Time
 	Status  string
 	Teacher string
+	Notes   string
 }
+
 type SegmentSummary struct {
 	Start   string `json:"start"`
 	End     string `json:"end"`
 	Status  string `json:"status"`
 	Teacher string `json:"teacher"`
+	Notes   string `json:"notes"`
 }
 
 func segmentsToJSON(segs []Segment) string {
@@ -71,6 +75,7 @@ func segmentsToJSON(segs []Segment) string {
 			End:     s.End.Format(time.RFC3339),
 			Status:  s.Status,
 			Teacher: s.Teacher,
+			Notes:   s.Notes,
 		}
 	}
 	b, _ := json.Marshal(summaries)
@@ -111,6 +116,7 @@ func normalizeLessons(lessons []untis.Lesson) []NormalizedLesson {
 					Start:   l.Start,
 					End:     l.End,
 					Status:  l.Status,
+					Notes:   l.Notes,
 					Teacher: l.Teacher.Current.Long,
 				})
 
@@ -139,6 +145,7 @@ func normalizeLessons(lessons []untis.Lesson) []NormalizedLesson {
 						Start:   l.Start,
 						End:     l.End,
 						Status:  l.Status,
+						Notes:   l.Notes,
 						Teacher: l.Teacher.Current.Long,
 					},
 				},
@@ -172,7 +179,10 @@ func Compare(oldT, newT untis.Timetable) TimetableDiff {
 		for _, o := range oldLessons {
 			n, ok := findBySignature(newLessons, o)
 			if !ok {
-				fmt.Printf("[findBySignature] no match for %s/%s\n", o.Subject, o.Teacher)
+				slog.Debug("no signature match for lesson",
+					"subject", o.Subject,
+					"teacher", o.Teacher,
+				)
 				continue
 			}
 
@@ -201,6 +211,7 @@ func findBySignature(lessons []NormalizedLesson, target NormalizedLesson) (Norma
 	}
 	return NormalizedLesson{}, false
 }
+
 func formatSegments(segs []Segment) string {
 	var sb strings.Builder
 	for _, s := range segs {
@@ -215,20 +226,9 @@ func formatSegments(segs []Segment) string {
 	}
 	return strings.TrimSpace(sb.String())
 }
+
 func diffNormalized(old, new NormalizedLesson) []LessonChange {
 	var out []LessonChange
-
-	fmt.Printf(
-		"\n[diffNormalized]\nSubject: %s\nIDs: %v\nOld: %s → %s\nNew: %s → %s\nOldSegments: %s\nNewSegments: %s\n",
-		old.Subject,
-		old.IDs,
-		old.Start.Format("15:04"),
-		old.End.Format("15:04"),
-		new.Start.Format("15:04"),
-		new.End.Format("15:04"),
-		formatSegments(old.Segments),
-		formatSegments(new.Segments),
-	)
 
 	// Handle regular case
 	if len(old.Segments) == 1 && len(new.Segments) == 1 {
@@ -262,6 +262,13 @@ func diffNormalized(old, new NormalizedLesson) []LessonChange {
 				After:  sn.Teacher,
 			})
 		}
+		if so.Notes != sn.Notes {
+			out = append(out, LessonChange{
+				Field:  FieldNotes,
+				Before: so.Notes,
+				After:  sn.Notes,
+			})
+		}
 	}
 	// Handle partial changes
 	if len(old.Segments) == 1 && len(new.Segments) > 1 {
@@ -271,5 +278,18 @@ func diffNormalized(old, new NormalizedLesson) []LessonChange {
 			After:  segmentsToJSON(new.Segments),
 		})
 	}
+
+	if len(out) > 0 {
+		slog.Debug("lesson diff detected",
+			"subject", old.Subject,
+			"ids", old.IDs,
+			"oldWindow", fmt.Sprintf("%s–%s", old.Start.Format("15:04"), old.End.Format("15:04")),
+			"newWindow", fmt.Sprintf("%s–%s", new.Start.Format("15:04"), new.End.Format("15:04")),
+			"oldSegments", formatSegments(old.Segments),
+			"newSegments", formatSegments(new.Segments),
+			"changes", len(out),
+		)
+	}
+
 	return out
 }
