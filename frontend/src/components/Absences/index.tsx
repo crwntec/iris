@@ -141,14 +141,18 @@ export function AbsenceCard({ absence }: { absence: Absence }) {
     <div
       className={cn(
         "relative rounded-3xl border p-4 pl-5 space-y-3 overflow-hidden transition-colors",
-        excuseStatus === 1 &&
-          "bg-zinc-900/60 border-zinc-800 hover:bg-zinc-900/80",
-        excuseStatus === 2 &&
-          "bg-amber-950/20 border-amber-900/30 hover:bg-amber-950/30",
-        excuseStatus === 0 &&
-          "bg-rose-950/20 border-rose-900/40 hover:bg-rose-950/30",
-        excuseStatus === 3 &&
-          "bg-pink-950/20 border-pink-900/40 hover:bg-pink-950/30",
+        excuseStatus === 1
+          ? "bg-zinc-900/60 border-zinc-800 hover:bg-zinc-900/80"
+          : "",
+        excuseStatus === 2
+          ? "bg-amber-950/20 border-amber-900/30 hover:bg-amber-950/30"
+          : "",
+        excuseStatus === 0
+          ? "bg-rose-950/20 border-rose-900/40 hover:bg-rose-950/30"
+          : "",
+        excuseStatus === 3
+          ? "bg-pink-950/20 border-pink-900/40 hover:bg-pink-950/30"
+          : "",
       )}
     >
       <StatusAccent excuseStatus={excuseStatus} />
@@ -166,10 +170,10 @@ export function AbsenceCard({ absence }: { absence: Absence }) {
         <span
           className={cn(
             "shrink-0 text-xs font-medium px-2 py-1 rounded-full",
-            excuseStatus === 1 && "bg-emerald-500/10 text-emerald-400",
-            excuseStatus === 2 && "bg-amber-500/10 text-amber-400",
-            excuseStatus === 0 && "bg-rose-500/10 text-rose-400",
-            excuseStatus === 3 && "bg-pink-500/10 text-pink-400",
+            excuseStatus === 1 ? "bg-emerald-500/10 text-emerald-400" : "",
+            excuseStatus === 2 ? "bg-amber-500/10 text-amber-400" : "",
+            excuseStatus === 0 ? "bg-rose-500/10 text-rose-400" : "",
+            excuseStatus === 3 ? "bg-pink-500/10 text-pink-400" : "",
           )}
         >
           {excuseStatus === 1
