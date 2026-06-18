@@ -324,6 +324,9 @@ export interface Absence {
   excuseStatus: string;
   isExcused: boolean;
   excuse: Excuse;
+  hasPartialExcuseStatus: boolean;
+  partialExcuseConfidence: number;
+  affectedLessons: number;
 }
 
 export interface Excuse {

@@ -366,5 +366,38 @@ func (c *Client) GetAbsences(ctx context.Context, info UntisInfo, start, end str
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return Absences{}, fmt.Errorf("parsing absences failed: %w", err)
 	}
-	return response.Data, nil
+	absences := processAbsences(response.Data)
+	return absences, nil
+}
+
+func countAffectedLessons(absence Absence) int {
+	lessonStartTimes := []int{740, 825, 920, 1005, 1120, 1200, 1350, 1435, 1525, 1610}
+	affectedLessons := 0
+	for _, startTime := range lessonStartTimes {
+		start := int(absence.StartTime)
+		end := int(absence.EndTime)
+		if start <= startTime && end >= startTime {
+			affectedLessons++
+		}
+	}
+	return affectedLessons
+}
+
+func computePartialExcuseStatus(absence Absence, affectedLessons int) bool {
+	if absence.IsExcused {
+		return false
+	}
+	if affectedLessons > 2 || (absence.LastUpdate-absence.CreateDate >= 0 && absence.CreatedUser != absence.UpdatedUser) {
+		return true
+	}
+	return false
+}
+
+func processAbsences(absences Absences) Absences {
+	for i := range absences.Absences {
+		absences.Absences[i].AffectedLessons = countAffectedLessons(absences.Absences[i])
+		absences.Absences[i].HasPartialExcuseStatus = computePartialExcuseStatus(absences.Absences[i], absences.Absences[i].AffectedLessons)
+		// absences.Absences[i].IsExcused = false
+	}
+	return absences
 }

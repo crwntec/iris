@@ -154,23 +154,26 @@ type Excuse struct {
 }
 
 type Absence struct {
-	CanEdit      bool   `json:"canEdit"`
-	CreateDate   int64  `json:"createDate"`
-	CreatedUser  string `json:"createdUser"`
-	EndDate      int    `json:"endDate"`
-	EndTime      int    `json:"endTime"`
-	Excuse       Excuse `json:"excuse"`
-	ExcuseStatus string `json:"excuseStatus"`
-	ID           int    `json:"id"`
-	IsExcused    bool   `json:"isExcused"`
-	LastUpdate   int64  `json:"lastUpdate"`
-	Reason       string `json:"reason"`
-	ReasonID     int    `json:"reasonId"`
-	StartDate    int    `json:"startDate"`
-	StartTime    int    `json:"startTime"`
-	StudentName  string `json:"studentName"`
-	Text         string `json:"text"`
-	UpdatedUser  string `json:"updatedUser"`
+	CanEdit                 bool   `json:"canEdit"`
+	CreateDate              int64  `json:"createDate"`
+	CreatedUser             string `json:"createdUser"`
+	EndDate                 int    `json:"endDate"`
+	EndTime                 int    `json:"endTime"`
+	Excuse                  Excuse `json:"excuse"`
+	ExcuseStatus            string `json:"excuseStatus"`
+	ID                      int    `json:"id"`
+	IsExcused               bool   `json:"isExcused"`
+	LastUpdate              int64  `json:"lastUpdate"`
+	Reason                  string `json:"reason"`
+	ReasonID                int    `json:"reasonId"`
+	StartDate               int    `json:"startDate"`
+	StartTime               int    `json:"startTime"`
+	StudentName             string `json:"studentName"`
+	Text                    string `json:"text"`
+	UpdatedUser             string `json:"updatedUser"`
+	AffectedLessons         int    `json:"affectedLessons"`
+	HasPartialExcuseStatus  bool   `json:"hasPartialExcuseStatus"`
+	PartialExcuseConfidence int    `json:"partialExcuseConfidence"`
 }
 
 type Absences struct {
