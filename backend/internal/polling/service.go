@@ -197,7 +197,7 @@ func (s *Service) Start() {
 
 func (s *Service) poll() {
 	subscribedUsers, err := s.store.Keys(s.ctx, "push:*")
-	slog.Info("polling timetable for changes", "subscribed_users", len(subscribedUsers))
+	slog.Debug("polling timetable for changes", "subscribed_users", len(subscribedUsers))
 	if err != nil {
 		slog.Error("failed to get subscribed users", "error", err)
 		return
