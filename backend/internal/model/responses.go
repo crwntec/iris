@@ -45,3 +45,31 @@ type ChangeEvent struct {
 	Severity ChangeSeverity `json:"severity"`
 	Label    string         `json:"label"`
 }
+
+// Dashboard
+type Dashboard struct {
+	UserCount    int    `json:"userCount"`
+	PushSubCount int    `json:"pushSubCount"`
+	LastPoll     string `json:"lastPoll"`
+	TotalChanges int    `json:"totalChanges"`
+	ChangeStats  struct {
+		Day   TimeFrameStats `json:"day"`
+		Week  TimeFrameStats `json:"week"`
+		Month TimeFrameStats `json:"month"`
+	} `json:"changeStats"`
+	MostCancelledTeacher struct {
+		Teacher string `json:"teacher"`
+		Count   int    `json:"count"`
+	} `json:"mostCancelledTeacher"`
+	MostCancelledSubject struct {
+		Subject string `json:"subject"`
+		Count   int    `json:"count"`
+	} `json:"mostCancelledSubject"`
+	EVA   int `json:"eva"`
+	TEAMS int `json:"teams"`
+}
+
+type TimeFrameStats struct {
+	TotalChanges int                `json:"totalChanges"`
+	Kinds        map[ChangeKind]int `json:"kinds"`
+}

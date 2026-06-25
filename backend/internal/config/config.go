@@ -18,6 +18,9 @@ type Config struct {
 
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
+
+	// Dashboard
+	AdminName string
 }
 
 func Load() Config {
@@ -35,6 +38,7 @@ func Load() Config {
 		UntisSchoolName: mustGetEnv("SCHOOL_NAME"),
 		VAPIDPublicKey:  mustGetEnv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey: mustGetEnv("VAPID_PRIVATE_KEY"),
+		AdminName:       mustGetEnv("ADMIN_NAME"),
 	}
 }
 

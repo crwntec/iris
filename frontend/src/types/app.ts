@@ -52,7 +52,8 @@ export type ChangeKind =
   | "room-change"
   | "time-change"
   | "notes"
-  | "generic";
+  | "generic"
+  | "restored";
 export type LessonField =
   | "status"
   | "teacher"
@@ -81,4 +82,25 @@ export interface ChangeEvent {
   kind: ChangeKind;
   severity: ChangeSeverity;
   label: string;
+}
+
+export interface DashboardData {
+  userCount: number;
+  pushSubCount: number;
+  lastPoll: string;
+  totalChanges: number;
+  changeStats: ChangeStats;
+  mostCancelledTeacher: { teacher: string; count: number };
+  mostCancelledSubject: { subject: string; count: number };
+  eva: number;
+  teams: number;
+}
+export interface ChangeStats {
+  day: TimeframeStats;
+  week: TimeframeStats;
+  month: TimeframeStats;
+}
+export interface TimeframeStats {
+  totalChanges: number;
+  kinds: Record<ChangeKind, number>;
 }

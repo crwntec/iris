@@ -17,7 +17,6 @@ import (
 	"github.com/crwntec/iris/backend/internal/store"
 	"github.com/crwntec/iris/backend/internal/untis"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/valkey-io/valkey-go"
 )
 
 // ── shared base ───────────────────────────────────────────────
@@ -53,8 +52,8 @@ func (b *base) persistSession(ctx context.Context, s *untis.AuthenticatedSession
 
 type AuthHandler struct{ base }
 
-func NewAuthHandler(vk valkey.Client, conf config.Config) *AuthHandler {
-	return &AuthHandler{base{store: store.New(vk), conf: conf}}
+func NewAuthHandler(s *store.Store, conf config.Config) *AuthHandler {
+	return &AuthHandler{base{store: s, conf: conf}}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {

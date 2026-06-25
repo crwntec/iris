@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthMiddleware(next http.Handler, conf config.Config) http.Handler {
+func AuthMiddleware(next http.Handler, conf config.Config, adminRequired bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		if !strings.HasPrefix(token, "Bearer ") {
@@ -36,6 +36,14 @@ func AuthMiddleware(next http.Handler, conf config.Config) http.Handler {
 			return
 		}
 		ctx := context.WithValue(r.Context(), "username", claims["username"])
+		isAdmin := claims["username"] == conf.AdminName
+		if adminRequired && !isAdmin {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if isAdmin {
+			ctx = context.WithValue(ctx, "admin", true)
+		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -20,6 +20,18 @@ func (s *Store) Get(ctx context.Context, key string) (string, error) {
 	return s.client.Do(ctx, s.client.B().Get().Key(key).Build()).ToString()
 }
 
+func (s *Store) Count(ctx context.Context, pattern string) (int64, error) {
+	keys, err := s.client.Do(
+		ctx,
+		s.client.B().Keys().Pattern(pattern).Build(),
+	).AsStrSlice()
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(len(keys)), nil
+}
+
 func (s *Store) Set(ctx context.Context, key string, value string, ttl time.Duration) error {
 	cmd := s.client.B().Set().Key(key).Value(value)
 	if ttl > 0 {

@@ -1,4 +1,4 @@
-import type { ChangeLogEntry } from "@/types/app";
+import type { ChangeLogEntry, DashboardData } from "@/types/app";
 import type { Absences, Timetable } from "@/types/untis";
 
 const BASE_URL = "/api";
@@ -52,7 +52,7 @@ export const api = {
       method: "POST",
     }),
   getChangeLog: () => request<ChangeLogEntry[]>("/untis/changelog"),
-   getPushVapidKey: ():   Promise<{ publicKey: string }> =>
+  getPushVapidKey: (): Promise<{ publicKey: string }> =>
     request("/push/vapid-public-key"),
- 
+  getDashboard: () => request<DashboardData>("/admin/dashboard"),
 };

@@ -1,5 +1,5 @@
 import { Bell, BellOff, Send, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { api } from "@/api/client";
 import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
@@ -10,8 +10,8 @@ import moment from "moment";
 import "moment/dist/locale/de";
 
 moment.locale("de");
-console.log(moment.locale());
-console.log(moment().format("dd"));
+// console.log(moment.locale());
+// console.log(moment().format("dd"));
 export default function Alerts() {
   const { data, isLoading, error, isFetching, refetch, dataUpdatedAt } =
     useQuery({
@@ -33,14 +33,37 @@ export default function Alerts() {
   );
   const [testLoading, setTestLoading] = useState(false);
   const [testSent, setTestSent] = useState(false);
-  const { subscribe, unsubscribe } = usePushSubscription();
+  const { subscribe, unsubscribe, getCurrentSubscription } =
+    usePushSubscription();
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!("Notification" in window) || Notification.permission !== "granted")
+      return;
+    getCurrentSubscription()
+      .then((sub) => {
+        if (!sub) {
+          setEnabled(false);
+        }
+      })
+      .catch(() => setEnabled(false));
+  }, []);
 
   const handleSubscribe = async () => {
-    const sub = await subscribe();
-    if (!sub) return;
-    await api.savePushSubscription(sub.toJSON());
-    setEnabled(true);
-    setIsDenied(false);
+    setSubscribeError(null);
+
+    try {
+      const sub = await subscribe();
+
+      await api.savePushSubscription(sub.toJSON());
+
+      setEnabled(true);
+      setIsDenied(false);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+
+      setSubscribeError("Push-Registrierung fehlgeschlagen: " + message);
+    }
   };
 
   const askUser = async () => {
@@ -127,6 +150,11 @@ export default function Alerts() {
                   ? "Du erhältst Push-Nachrichten bei Änderungen an deinem Stundenplan."
                   : "Bitte erlaube Push-Benachrichtigungen, um über Änderungen informiert zu werden."}
               </p>
+              {subscribeError && (
+                <p className="text-xs text-rose-400 text-center leading-relaxed px-2">
+                  {subscribeError}
+                </p>
+              )}
             </div>
           </div>
 

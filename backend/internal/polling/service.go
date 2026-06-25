@@ -214,9 +214,13 @@ func (s *Service) poll() {
 			}
 		}(userKey)
 	}
+	s.store.Set(s.ctx, "last_poll", timeStr(), 0)
 	wg.Wait()
 }
 
 func todayStr() string {
 	return time.Now().Format("2006-01-02")
+}
+func timeStr() string {
+	return time.Now().Format("2006-01-02 15:04:05")
 }
