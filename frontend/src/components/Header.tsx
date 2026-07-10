@@ -1,9 +1,16 @@
-import { LogOut } from "lucide-react";
+import { parseJwt } from "@/util";
+import { LogOut, TrendingUp } from "lucide-react";
 
 export default function Header() {
   const logout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
+  };
+  const token = localStorage.getItem("token");
+  const claims = token ? parseJwt(token) : null;
+
+  const navigateToDashboard = () => {
+    window.location.href = "/dashboard";
   };
 
   return (
@@ -15,14 +22,23 @@ export default function Header() {
           <p className="text-md text-white tracking-[0.3em] uppercase">iris</p>
         </div>
       </div>
-
-      {/* Right action */}
-      <button
-        onClick={logout}
-        className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
-      >
-        <LogOut size={18} />
-      </button>
+      <div className="flex align-center">
+        {claims?.admin && (
+          <button
+            onClick={navigateToDashboard}
+            className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+          >
+            <TrendingUp size={18} />
+          </button>
+        )}
+        {/* Right action */}
+        <button
+          onClick={logout}
+          className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+        >
+          <LogOut size={18} />
+        </button>
+      </div>
     </header>
   );
 }

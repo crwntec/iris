@@ -61,12 +61,14 @@ type Dashboard struct {
 		Teacher string `json:"teacher"`
 		Count   int    `json:"count"`
 	} `json:"mostCancelledTeacher"`
+	TeacherCancels       map[string]int `json:"teacherCancels"`
 	MostCancelledSubject struct {
 		Subject string `json:"subject"`
 		Count   int    `json:"count"`
 	} `json:"mostCancelledSubject"`
-	EVA   int `json:"eva"`
-	TEAMS int `json:"teams"`
+	SubjectCancels map[string]int `json:"subjectCancels"`
+	EVA            int            `json:"eva"`
+	TEAMS          int            `json:"teams"`
 }
 
 type TimeFrameStats struct {

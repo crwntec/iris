@@ -91,7 +91,9 @@ export interface DashboardData {
   totalChanges: number;
   changeStats: ChangeStats;
   mostCancelledTeacher: { teacher: string; count: number };
+  teacherCancels: { teacher: string; count: number }[];
   mostCancelledSubject: { subject: string; count: number };
+  subjectCancels: { subject: string; count: number }[];
   eva: number;
   teams: number;
 }

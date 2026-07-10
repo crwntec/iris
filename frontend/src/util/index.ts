@@ -116,3 +116,8 @@ export function urlBase64ToUint8Array(base64: string) {
   const raw = atob(base64url);
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
+export function parseJwt(token: string) {
+  const payload = token.split(".")[1];
+  const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+  return JSON.parse(json);
+}

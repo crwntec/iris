@@ -106,14 +106,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username":  d.Username,
-		"sessionID": client.Session.SessionID,
+		"username": d.Username,
+		"admin":    d.Username == h.conf.AdminName,
 	}).SignedString([]byte(h.conf.JWTSecret))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "success", "token": token})
 }

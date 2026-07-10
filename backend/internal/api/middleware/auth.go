@@ -36,7 +36,7 @@ func AuthMiddleware(next http.Handler, conf config.Config, adminRequired bool) h
 			return
 		}
 		ctx := context.WithValue(r.Context(), "username", claims["username"])
-		isAdmin := claims["username"] == conf.AdminName
+		isAdmin, _ := claims["admin"].(bool)
 		if adminRequired && !isAdmin {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

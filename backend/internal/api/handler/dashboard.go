@@ -66,9 +66,11 @@ func (h *DashboardHandler) build(ctx context.Context) (model.Dashboard, error) {
 		&d.ChangeStats.Week,
 		&d.ChangeStats.Month,
 	}
-
+	d.TeacherCancels = map[string]int{}
 	teacherCancels := map[string]int{}
 	subjectCancels := map[string]int{}
+	d.SubjectCancels = map[string]int{}
+	seenLessons := map[string]bool{}
 
 	for _, key := range changeKeys {
 		entries, err := h.store.GetChanges(ctx, key)
@@ -91,6 +93,11 @@ func (h *DashboardHandler) build(ctx context.Context) (model.Dashboard, error) {
 				apiEntry.DetectedAt.After(cutoffs[2]),
 			}
 			for _, group := range apiEntry.Changes {
+				key := group.Subject + " " + group.Start.Format("2006-01-02")
+				if seenLessons[key] {
+					continue
+				}
+				seenLessons[key] = true
 				d.TotalChanges++
 				for i, f := range frames {
 					if inFrame[i] {
@@ -149,12 +156,14 @@ func (h *DashboardHandler) build(ctx context.Context) (model.Dashboard, error) {
 			d.MostCancelledTeacher.Teacher = teacher
 			d.MostCancelledTeacher.Count = count
 		}
+		d.TeacherCancels[teacher] = count
 	}
 	for subject, count := range subjectCancels {
 		if count > d.MostCancelledSubject.Count {
 			d.MostCancelledSubject.Subject = subject
 			d.MostCancelledSubject.Count = count
 		}
+		d.SubjectCancels[subject] = count
 	}
 	return d, nil
 }
