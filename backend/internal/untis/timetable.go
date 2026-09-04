@@ -7,7 +7,7 @@ import (
 
 func positionItemToChangableEntry(items []PositionItem) (ChangableEntry, error) {
 	if len(items) == 0 {
-		return ChangableEntry{}, fmt.Errorf("no position items provided")
+		return ChangableEntry{}, nil // Only encountered this edge case once. However it shouldn't break the timetable fetching alltogether
 	}
 	item := items[0]
 
@@ -53,15 +53,15 @@ func TimetableFromResponse(resp TimetableResponse) (Timetable, error) {
 			}
 			teacher, err := positionItemToChangableEntry(ge.Position1)
 			if err != nil {
-				return Timetable{}, fmt.Errorf("parsing teacher position: %w", err)
+				return Timetable{}, fmt.Errorf("parsing teacher position: %w for grid entry %+v\n", err, ge)
 			}
 			subject, err := positionItemToChangableEntry(ge.Position2)
 			if err != nil {
-				return Timetable{}, fmt.Errorf("parsing subject position: %w", err)
+				return Timetable{}, fmt.Errorf("parsing subject position: %w for grid entry %+v\n", err, ge)
 			}
 			room, err := positionItemToChangableEntry(ge.Position3)
 			if err != nil {
-				return Timetable{}, fmt.Errorf("parsing room position: %w", err)
+				return Timetable{}, fmt.Errorf("parsing room position: %w for grid entry %+v\n", err, ge)
 			}
 
 			lesson := Lesson{
@@ -74,7 +74,7 @@ func TimetableFromResponse(resp TimetableResponse) (Timetable, error) {
 				Teacher: teacher,
 				Subject: subject,
 				Room:    room,
-				Icons: ge.Icons,
+				Icons:   ge.Icons,
 			}
 			day.Lessons = append(day.Lessons, lesson)
 		}
