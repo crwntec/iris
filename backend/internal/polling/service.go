@@ -131,11 +131,11 @@ func (s *Service) processUser(username string) error {
 		)
 
 		// still update snapshot/hash
-		if err := s.store.Set(s.ctx, hashKey, newHash, 2*s.pollInterval); err != nil {
+		if err := s.store.Set(s.ctx, hashKey, newHash, 0); err != nil {
 			return fmt.Errorf("updating timetable hash: %w", err)
 		}
 
-		if err := s.store.Set(s.ctx, ttKey, string(encoded), 2*s.pollInterval); err != nil {
+		if err := s.store.Set(s.ctx, ttKey, string(encoded), 0); err != nil {
 			return fmt.Errorf("updating timetable: %w", err)
 		}
 
@@ -148,11 +148,11 @@ func (s *Service) processUser(username string) error {
 		"changes", timetableDiff,
 	)
 
-	if err := s.store.Set(s.ctx, hashKey, newHash, 2*s.pollInterval); err != nil {
+	if err := s.store.Set(s.ctx, hashKey, newHash, 0); err != nil {
 		return fmt.Errorf("updating timetable hash: %w", err)
 	}
 
-	if err := s.store.Set(s.ctx, ttKey, string(encoded), 2*s.pollInterval); err != nil {
+	if err := s.store.Set(s.ctx, ttKey, string(encoded), 0); err != nil {
 		return fmt.Errorf("updating timetable: %w", err)
 	}
 
