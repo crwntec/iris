@@ -165,7 +165,7 @@ func isAdjacentOrOverlapping(aEnd, bStart time.Time) bool {
 	if bStart.Before(aEnd) || bStart.Equal(aEnd) {
 		return true
 	}
-	return bStart.Sub(aEnd) <= 5*time.Minute
+	return bStart.Sub(aEnd) <= 60*time.Minute
 }
 
 func Compare(oldT, newT untis.Timetable) TimetableDiff {
