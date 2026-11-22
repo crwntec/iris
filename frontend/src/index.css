@@ -69,3 +69,81 @@ textarea,
         touch-action: pan-y;
     }
 }
+
+/* ─── Excuse print document ─── */
+.excuse-print {
+    display: none;
+}
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 24mm 22mm;
+    }
+
+    html,
+    body {
+        min-height: 0;
+        height: auto;
+        padding: 0;
+        overflow: visible;
+        background: #fff;
+        color: #000;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    .printing-excuse #root {
+        display: none;
+    }
+
+    .printing-excuse .excuse-print {
+        display: block;
+        color: #000;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.55;
+    }
+
+    .excuse-print p {
+        margin: 0 0 8mm;
+    }
+
+    .excuse-print__issued-at {
+        margin-bottom: 26mm !important;
+        text-align: right;
+    }
+
+    .excuse-print h1 {
+        margin: 0 0 14mm;
+        font-size: 18pt;
+        font-weight: 700;
+    }
+
+    .excuse-print ul {
+        margin: -2mm 0 10mm;
+        padding-left: 7mm;
+    }
+
+    .excuse-print li {
+        margin: 0 0 3mm;
+    }
+
+    .excuse-print__closing {
+        margin-top: 16mm !important;
+    }
+
+    .excuse-print__signature-space {
+        height: 35mm;
+    }
+
+    .excuse-print__signature-line {
+        width: 55mm;
+        border-top: 1px solid #000;
+    }
+
+    .excuse-print__signature-label {
+        margin-top: 2mm !important;
+        font-size: 10pt;
+    }
+}
+

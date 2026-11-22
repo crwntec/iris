@@ -1,8 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { cn, formatDateRange, getDateRangeForPreset } from "@/util";
-import { useMemo, useState } from "react";
-import { SortAsc, SortDesc, RefreshCw, HelpCircle, Filter } from "lucide-react";
+import { getCurrentSchoolYearRange, getOpenAbsenceDays } from "@/util/excuses";
+import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
+import {
+  SortAsc,
+  SortDesc,
+  RefreshCw,
+  HelpCircle,
+  Filter,
+  Printer,
+} from "lucide-react";
 import type { Absence } from "@/types/untis";
 import { type ApiError, ErrorState, getErrorMessage } from "@/components/Error";
 import {
@@ -13,6 +22,10 @@ import {
   FilterModal,
   type AbsenceFilter,
 } from "@/components/Absences";
+import {
+  ExcusePrintDocument,
+  type ExcusePrintData,
+} from "@/components/Absences/ExcusePrintDocument";
 import PresetButtons from "@/components/PresetButtons";
 
 const STALE_TIME = 1000 * 60 * 10;
@@ -24,11 +37,16 @@ export default function Absences() {
   const [showHelp, setShowHelp] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [asc, setAsc] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Set<AbsenceFilter>>(
+    new Set(),
+  );
+  const [printData, setPrintData] = useState<ExcusePrintData | null>(null);
 
   const { start: startDate, end: endDate } = useMemo(
     () => getDateRangeForPreset(activePreset),
     [activePreset],
   );
+  const schoolYearRange = useMemo(() => getCurrentSchoolYearRange(), []);
 
   const { data, isLoading, error, isFetching, refetch, dataUpdatedAt } =
     useQuery({
@@ -42,6 +60,52 @@ export default function Absences() {
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
     });
 
+  const {
+    data: schoolYearData,
+    isLoading: isSchoolYearLoading,
+    isError: hasSchoolYearError,
+  } = useQuery({
+    queryKey: ["absences", schoolYearRange.start, schoolYearRange.end],
+    queryFn: () =>
+      api.getAbsences(schoolYearRange.start, schoolYearRange.end),
+    staleTime: STALE_TIME,
+    retry: (failureCount, err: ApiError) => {
+      const { recoverable } = getErrorMessage(err);
+      return recoverable && failureCount < 3;
+    },
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
+  });
+
+  const openSchoolYearDays = useMemo(
+    () => getOpenAbsenceDays(schoolYearData?.absences ?? []),
+    [schoolYearData],
+  );
+
+  const printExcuse = (absenceDays: number[]) => {
+    if (absenceDays.length === 0) return;
+
+    // Keep this synchronous with the tap/click. Safari then presents its native
+    // print sheet instead of treating it as a blocked popup.
+    flushSync(() => {
+      setPrintData({ absenceDays, issuedAt: new Date() });
+    });
+    document.body.classList.add("printing-excuse");
+    window.print();
+  };
+
+  useEffect(() => {
+    const resetPrintDocument = () => {
+      document.body.classList.remove("printing-excuse");
+      setPrintData(null);
+    };
+
+    window.addEventListener("afterprint", resetPrintDocument);
+    return () => {
+      window.removeEventListener("afterprint", resetPrintDocument);
+      document.body.classList.remove("printing-excuse");
+    };
+  }, []);
+
   if (error && !data) {
     return <ErrorState error={error as ApiError} onRetry={() => refetch()} />;
   }
@@ -51,10 +115,6 @@ export default function Absences() {
   const unexcused = absences.filter((a) => !a.isExcused);
   // eslint-disable-next-line react-hooks/purity
   const isStale = Date.now() - dataUpdatedAt > STALE_TIME;
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [activeFilters, setActiveFilters] = useState<Set<AbsenceFilter>>(
-    new Set(),
-  );
 
   const toggleFilter = (key: AbsenceFilter) =>
     setActiveFilters((prev) => {
@@ -125,6 +185,22 @@ export default function Absences() {
               <RefreshCw size={12} className="text-zinc-500 animate-spin" />
             )}
           </div>
+
+          {!hasSchoolYearError && (
+            <button
+              type="button"
+              onClick={() => printExcuse(openSchoolYearDays)}
+              disabled={isSchoolYearLoading || openSchoolYearDays.length === 0}
+              className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99]"
+            >
+              <Printer size={16} strokeWidth={1.75} />
+              {isSchoolYearLoading
+                ? "Offene Fehltage laden…"
+                : openSchoolYearDays.length === 0
+                  ? "Keine offenen Fehltage"
+                  : `Alle ${openSchoolYearDays.length} offenen Fehltage entschuldigen`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -180,9 +256,21 @@ export default function Absences() {
         {isLoading ? (
           [...Array(3)].map((_, i) => <AbsenceCardSkeleton key={i} />)
         ) : sortedAbsences.length > 0 ? (
-          sortedAbsences.map((absence) => (
-            <AbsenceCard key={absence.id} absence={absence} />
-          ))
+          sortedAbsences.map((absence) => {
+            const absenceDays = getOpenAbsenceDays([absence]);
+
+            return (
+              <AbsenceCard
+                key={absence.id}
+                absence={absence}
+                onPrint={
+                  absenceDays.length > 0
+                    ? () => printExcuse(absenceDays)
+                    : undefined
+                }
+              />
+            );
+          })
         ) : (
           <div className="text-center py-12 space-y-3">
             <p className="text-zinc-400 text-sm">
@@ -226,6 +314,8 @@ export default function Absences() {
           onToggle={toggleFilter}
         />
       )}
+      {printData && <ExcusePrintDocument {...printData} />}
     </div>
   );
 }
+

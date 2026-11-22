@@ -1,6 +1,6 @@
 import type { Absence } from "@/types/untis";
 import { cn, formatUntisDate, formatUntisTime } from "@/util";
-import { Clock } from "lucide-react";
+import { Clock, Printer } from "lucide-react";
 // define the filter shape
 export type AbsenceFilter = "excused" | "open" | "partial" | "late";
 
@@ -128,7 +128,13 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function AbsenceCard({ absence }: { absence: Absence }) {
+export function AbsenceCard({
+  absence,
+  onPrint,
+}: {
+  absence: Absence;
+  onPrint?: (absence: Absence) => void;
+}) {
   const excuseStatus = absence.hasPartialExcuseStatus
     ? 2
     : absence.isExcused
@@ -201,6 +207,17 @@ export function AbsenceCard({ absence }: { absence: Absence }) {
         <p className="text-xs text-zinc-400 italic leading-relaxed">
           {absence.text}
         </p>
+      )}
+
+      {onPrint && (
+        <button
+          type="button"
+          onClick={() => onPrint(absence)}
+          className="w-full flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/80 px-3 py-2.5 text-sm font-medium text-zinc-100 transition-colors hover:bg-zinc-700 active:scale-[0.98]"
+        >
+          <Printer size={15} strokeWidth={1.75} />
+          Entschuldigung drucken
+        </button>
       )}
     </div>
   );
@@ -281,3 +298,4 @@ export function FilterModal({
     </div>
   );
 }
+
